@@ -68,6 +68,7 @@ def parse_args():
     )
     parser.add_argument("--limit", type=int, default=0, help="Number of samples to evaluate (0 for all)")
     parser.add_argument("--dry-run", action="store_true", help="Run 5 samples smoke test")
+    parser.add_argument("--rag", action="store_true", help="Use shared BGE-M3 RAG in the cascaded arm")
     parser.add_argument(
         "--db-path",
         type=str,
@@ -184,7 +185,7 @@ def run_benchmark():
     samples = load_dataset(args.dataset, limit=limit)
     total_samples = len(samples)
     dataset_name = os.path.basename(args.dataset)
-    run_id = f"RUN-{datetime_tag()}-{args.mode.upper()}"
+    run_id = f"RUN-{datetime_tag()}-{args.mode.upper()}{'-RAG' if args.rag else '-BASE'}"
     logger.info(f"Loaded {total_samples} samples from {dataset_name}. Starting mode: {args.mode} (run_id: {run_id})")
 
     # Initialize components according to mode
@@ -197,17 +198,22 @@ def run_benchmark():
     if args.mode in ("all", "tier2_only"):
         council = ForensicCouncil()
     if args.mode in ("all", "cascaded"):
-        router = TwoTierRouter(use_council=True)
+        rag_retriever = None
+        if args.rag:
+            from pipeline.rag import BgeM3Embedder, RagRetriever
+            rag_retriever = RagRetriever(BgeM3Embedder())
+        router = TwoTierRouter(use_council=True, rag_retriever=rag_retriever)
         # Hook council evaluate_sync with SQLite response cache
         if router.council:
             original_eval = router.council.evaluate_sync
 
-            def cached_eval(message: str, active_roles=None):
-                cached = get_cached_council_response(args.db_path, message)
+            def cached_eval(message: str, active_roles=None, **kwargs):
+                cached = None if args.rag else get_cached_council_response(args.db_path, message)
                 if cached:
                     return cached
-                res = original_eval(message, active_roles=active_roles)
-                set_cached_council_response(args.db_path, message, res)
+                res = original_eval(message, active_roles=active_roles, **kwargs)
+                if not args.rag:
+                    set_cached_council_response(args.db_path, message, res)
                 return res
 
             router.council.evaluate_sync = cached_eval
@@ -219,6 +225,7 @@ def run_benchmark():
     for active_mode in modes_to_execute:
         logger.info(f"--- Executing Arm: {active_mode} ({total_samples} samples) ---")
         correct_count = 0
+        tp = fp = tn = fn = 0
         total_latency = 0.0
         total_cost = 0.0
         total_calls = 0
@@ -273,6 +280,14 @@ def run_benchmark():
                 cost = res.get("total_cost_usd", 0.0)
 
             is_correct = 1 if pred == gold else 0
+            if gold == "SCAM" and pred == "SCAM":
+                tp += 1
+            elif gold == "HAM" and pred == "SCAM":
+                fp += 1
+            elif gold == "HAM" and pred == "HAM":
+                tn += 1
+            elif gold == "SCAM" and pred == "HAM":
+                fn += 1
             if is_correct:
                 correct_count += 1
             total_latency += elapsed_ms
@@ -312,9 +327,12 @@ def run_benchmark():
         # Print summary for this mode
         acc = (correct_count / total_samples) * 100.0 if total_samples else 0.0
         avg_lat = total_latency / total_samples if total_samples else 0.0
+        false_positive_rate = fp / (fp + tn) if fp + tn else 0.0
+        scam_recall = tp / (tp + fn) if tp + fn else 0.0
         logger.info(
             f"=== ARM SUMMARY [{active_mode}] ===\n"
             f"Total Samples: {total_samples} | Accuracy: {acc:.2f}%\n"
+            f"FPR: {false_positive_rate:.3f} | SCAM recall: {scam_recall:.3f}\n"
             f"Total Cost: ${total_cost:.5f} | Total Calls: {total_calls} | Avg Latency: {avg_lat:.1f}ms\n"
         )
 

@@ -38,7 +38,7 @@ def test_tier1_fastpath_direct_exit_ham():
             "threshold_high": 0.85,
             "engine": "onnx",
         }
-        res = router.route("Thong bao: Quy khach da thanh toan tien dien thanh cong 500.000d.")
+        res = router.classify("Thong bao: Quy khach da thanh toan tien dien thanh cong 500.000d.")
         assert res["routing_path"] == "TIER_1_DIRECT_FASTPATH"
         assert res["escalated"] is False
         assert res["final_label"] in ["HAM", "LOW-RISK"]
@@ -61,7 +61,7 @@ def test_tier1_fastpath_direct_exit_scam():
             "threshold_high": 0.85,
             "engine": "onnx",
         }
-        res = router.route("Tai khoan cua ban bi khoa, bam vao https://vcb-scam.xyz de mo khoa.")
+        res = router.classify("Tai khoan cua ban bi khoa, bam vao https://vcb-scam.xyz de mo khoa.")
         assert res["routing_path"] == "TIER_1_DIRECT_FASTPATH"
         assert res["escalated"] is False
         assert res["final_label"] in ["SCAM", "SCAM-RISK"]
@@ -104,7 +104,7 @@ def test_tier1_review_escalation_to_3agent_council():
             "estimated_council_cost_usd": 0.00045,
         }
         with patch.object(router.council, "evaluate_sync", return_value=mock_council_res):
-            res = router.route("Ngan hang thong bao cap nhat sinh trac hoc theo QĐ 2345.")
+            res = router.classify("Ngan hang thong bao cap nhat sinh trac hoc theo QĐ 2345.")
             assert res["routing_path"] == "TIER_2_FORENSIC_COUNCIL"
             assert res["escalated"] is True
             assert res["final_label"] == "SCAM-RISK"

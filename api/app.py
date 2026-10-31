@@ -32,6 +32,8 @@ load_dotenv(os.path.join(ROOT_DIR, ".env"))
 from pipeline.two_tier_router import TwoTierRouter
 from api.visobert_app import router as visobert_router
 from pipeline.persistence import check_database, save_scan
+from pipeline.rag import BgeM3Embedder, RagRetriever, apply_rag_migration
+from pipeline.rag_ingestion import RagIngestor
 from scripts.update_phishtank import feed_path, main as download_phishtank_feed
 from api.schemas import (
     ScanRequest,
@@ -86,14 +88,35 @@ def _download_missing_phishtank_feed():
 @app.on_event("startup")
 def startup_event():
     global router_instance, _phishtank_bootstrap_started
+
+    if router_instance is not None:
+        return
     logger.info("Initializing ScamShield TwoTierRouter...")
     try:
+        rag_retriever = None
+        if not hasattr(app.state, "rag_embedder"):
+            app.state.rag_embedder = None
+        if not hasattr(app.state, "rag_ingestor"):
+            app.state.rag_ingestor = None
+        if os.getenv("RAG_ENABLED", "true").lower() == "true":
+            try:
+                apply_rag_migration()
+                if app.state.rag_embedder is None:
+                    app.state.rag_embedder = BgeM3Embedder()
+                rag_retriever = RagRetriever(app.state.rag_embedder)
+                if app.state.rag_ingestor is None:
+                    app.state.rag_ingestor = RagIngestor(app.state.rag_embedder)
+                    app.state.rag_ingestor.start_daily_refresh()
+                logger.info("RAG BGE-M3 loaded once; ingestion and inference share the instance.")
+            except Exception as rag_error:
+                logger.warning("RAG unavailable at startup: %s", type(rag_error).__name__)
         router_instance = TwoTierRouter(
             confidence_threshold=float(os.getenv("TIER1_CONFIDENCE_THRESHOLD", "0.90")),
             api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
             config_path=os.path.join(ROOT_DIR, "config", "gemini_models.yaml"),
             council_config_path=os.path.join(ROOT_DIR, "config", "council_registry.yaml"),
             use_council=os.getenv("USE_COUNCIL", "true").lower() == "true",
+            rag_retriever=rag_retriever,
         )
         safe_browsing_key = router_instance.url_signals.safe_browsing.api_key
         if safe_browsing_key and not safe_browsing_key.lower().startswith("your_"):

@@ -108,6 +108,8 @@ def save_scan(
                 job_values,
             )
             job_id = cursor.fetchone()[0]
+            cursor.execute("""DELETE FROM inference_retrieved_chunks
+                              WHERE inference_id IN (SELECT id FROM ai_inferences WHERE ai_job_id = %s)""", (job_id,))
             cursor.execute("DELETE FROM ai_inferences WHERE ai_job_id = %s", (job_id,))
 
             if url_only:
@@ -156,13 +158,25 @@ def save_scan(
                     """INSERT INTO ai_inferences
                        (ai_job_id, stage, model_id, result, confidence, explanation, raw_response,
                         attempt_no, latency_ms, api_cost, fallback_used, created_at)
-                       VALUES (%s, 'LLM', %s, %s, %s, %s, %s, 1, %s, %s, true, %s)""",
+                       VALUES (%s, 'LLM', %s, %s, %s, %s, %s, 1, %s, %s, true, %s)
+                       RETURNING id""",
                     (
                         job_id, llm_id, _result(final_label), confidence, explanation,
                         Json({key: value for key, value in tier2.items() if key != "rendered_prompt"}),
                         int(float(tier2.get("latency_ms", 0))), float(tier2.get("cost_usd", 0)), now,
                     ),
                 )
+                inference_id = cursor.fetchone()[0]
+                rag = tier2.get("rag") or {}
+                if rag.get("status") == "USED":
+                    for rank, source in enumerate(rag.get("sources", []), start=1):
+                        cursor.execute(
+                            """INSERT INTO inference_retrieved_chunks
+                               (inference_id, chunk_id, retrieval_rank, similarity_score,
+                                retrieval_method, used_in_prompt, retrieved_at)
+                               VALUES (%s,%s,%s,%s,'BGE_M3_DENSE_COSINE',true,%s)""",
+                            (inference_id, source["chunk_id"], rank, source["similarity"], now),
+                        )
 
 
 def save_prediction(*, message: str, core_check_id: Optional[int], result: Dict[str, Any]) -> None:

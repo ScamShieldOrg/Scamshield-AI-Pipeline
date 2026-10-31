@@ -1,6 +1,11 @@
 import os
 
 os.environ["PHISHTANK_AUTO_DOWNLOAD"] = "false"
+os.environ["RAG_ENABLED"] = "false"
+os.environ["GEMINI_API_KEY"] = ""
+os.environ["GOOGLE_API_KEY"] = ""
+os.environ["SAFE_BROWSING_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = ""
 
 import pytest
 from unittest.mock import patch

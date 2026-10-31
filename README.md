@@ -35,6 +35,7 @@ dùng trong điều kiện định tuyến hiện tại.
      2. `Psycholinguistic & Vietnamese Slang Profiler`: thao túng tâm lý, tiếng lóng và teencode.
      3. `Public Defender & Anti-False-Positive Advocate`: tìm căn cứ hợp lệ để hạn chế báo động giả.
    - Trước khi gửi đến hội đồng, hệ thống che số điện thoại, giấy tờ tùy thân và số tài khoản phát hiện được. Các vai trò chạy song song; mỗi vai trò có mô hình phân tích chính (*maker*), mô hình thẩm định (*checker*) và chuỗi mô hình dự phòng. Nếu các lời gọi đám mây thất bại, vai trò dùng heuristic cục bộ.
+   - Khi RAG khả dụng, đầu vào được chuẩn hóa và che PII một lần, rồi BGE-M3 truy xuất tối đa 5 đoạn đã kiểm duyệt vượt ngưỡng cosine được hiệu chỉnh. Hội đồng và nhánh Gemini dự phòng dùng cùng chứng cứ có `chunk_id`; similarity không phải xác suất lừa đảo.
    - Điểm đồng thuận là trung bình xác suất lừa đảo theo trọng số vai trò. Khi Defender bỏ phiếu `LOW-RISK` với độ tin cậy ít nhất 0.80, điểm giảm 0.25. Hội đồng trả `SCAM-RISK`, `LOW-RISK` hoặc `UNKNOWN` theo ngưỡng và tình trạng mâu thuẫn phiếu. Cấu hình Early-Exit hiện yêu cầu **3 phiếu đồng nhất trên 3 vai trò**, nên không bỏ qua vai trò nào trong cấu hình mặc định. Circuit Breaker tạm ngắt mô hình lỗi và thử mô hình dự phòng.
    - Nếu hội đồng gặp lỗi ở cấp điều phối, router thử một Gemini LLM qua `ModelRegistry`; nếu tầng 2 vẫn không khả dụng, router giữ kết quả ViSoBERT, bao gồm nhãn `REVIEW` khi chưa thể kết luận. Trường hợp URL khớp nguồn đe dọa nhưng ViSoBERT trả HAM giữ `UNKNOWN`. Nhánh Gemini LLM đơn lẻ hiện chưa dùng bước che PII của hội đồng.
 
@@ -197,6 +198,59 @@ cơ sở dữ liệu đầu tiên, Postgres chạy `db/init/001_ai_service.sql`,
 vụ AI, mô hình, suy luận và RAG. Các tập lệnh khởi tạo chỉ chạy khi volume dữ liệu
 Postgres còn trống. Nếu volume đã có cơ sở dữ liệu, hãy áp dụng SQL một lần bằng
 lệnh `psql -f db/init/001_ai_service.sql`.
+
+### RAG cho Tier 2
+
+Khi `RAG_ENABLED=true` (mặc định), API tải **một** BGE-M3 tại startup và dùng chung
+cho suy luận và tác vụ nạp nguồn chạy nền. Model được ghim tại revision
+`5617a9f61b028005a4858fdac845db406aefb181`; lần đầu cần tải từ Hugging Face.
+Compose lưu cache trong volume `bge-m3-model-cache` và chạy một Uvicorn worker.
+Không chạy nhiều worker nếu muốn chỉ có một bản model trong tiến trình dịch vụ.
+Nếu tải model hoặc DB lỗi, Tier 2 tiếp tục chạy và báo `telemetry.tier2.rag.status=UNAVAILABLE`.
+Trước Tier 2, SMS được chuẩn hóa và che PII; URL trong prompt chỉ giữ scheme,
+hostname và dấu hiệu liên kết APK, còn Tier 1 vẫn tra URL gốc.
+
+Tác vụ nền đọc URL hạt giống trong `config/rag_sources.yaml` mỗi 24 giờ. Chỉ URL
+HTTPS có hostname nằm chính xác trong `allowed_hosts` được tải; redirect bị từ
+chối. Các trang đã đọc được nạp thành `VERIFIED` và có hiệu lực 7 ngày sau lần
+tải thành công gần nhất. Có thể đặt ca đã duyệt tại
+`data/rag/approved_cases/*.json` với các trường bắt buộc `title`, `text`,
+`review_status: "VERIFIED"`, `case_label: "SCAM"` hoặc `"HAM"`; `source_url` là
+tùy chọn. Nội dung được che PII trước khi lưu và tạo embedding. Khi nguồn đổi,
+phiên bản cũ ngừng hoạt động nhưng vẫn còn cho lịch sử trích dẫn.
+
+**RAG không tự kích hoạt chỉ vì có corpus.** Tạo benchmark tiếng Việt JSONL với
+`query_id`, `query`, `passage`, `relevant` (boolean), `source_group` và `split`
+(`calibration` hoặc `holdout`). Mỗi `source_group` chỉ thuộc một split; các cặp
+query–passage cần được người đánh giá gán nhãn liên quan. Chạy:
+
+```bash
+python scripts/calibrate_rag.py data/rag/relevance_benchmark.jsonl
+```
+
+Script chỉ ghi `config/rag_threshold.json` khi precision của các đoạn được nhận
+đạt ít nhất 95% ở cả calibration và holdout. Đưa file này vào image khi deploy.
+Nếu file thiếu, sai revision hoặc chưa đạt kiểm định, RAG báo `UNAVAILABLE` và
+không đưa Top-5 yếu vào prompt. Khi có ngưỡng, mỗi lần quét chọn Top-5 cosine
+trên tài liệu `VERIFIED`, còn hiệu lực và đúng embedding model/version, rồi loại
+mọi đoạn dưới ngưỡng; nếu không còn đoạn nào, trả `NO_MATCH`. Similarity chỉ là
+độ gần trong không gian embedding, không phải xác suất lừa đảo.
+
+Repo có benchmark khởi đầu `data/rag/relevance_benchmark.jsonl` gồm 40 cặp đã
+gán nhãn theo bốn nhóm bài viết; script giải tham chiếu `source_key` và `chunk_no`
+từ corpus active. Revision hiện tại tạo ngưỡng `0.6536799` trong
+`config/rag_threshold.json`: precision 100% ở cả hai split, recall lần lượt
+37,5% và 25%. Đây là mẫu nhỏ, ưu tiên tránh chứng cứ sai; cần mở rộng tập
+gán nhãn trước khi coi các số này là chất lượng triển khai thực tế.
+
+API tự áp dụng `db/migrations/002_rag.sql` cho volume PostgreSQL đã tồn tại trước
+khi khởi tạo RAG. Để áp dụng thủ công: `psql "$DATABASE_URL" -f db/migrations/002_rag.sql`.
+
+So sánh kết quả SMS trước và sau RAG trên cùng tập kiểm thử bằng hai lần chạy
+`scripts/run_two_tier_benchmark.py` với `--mode cascaded --dataset
+data/raw/vietnamese_sms_test.csv`; thêm `--rag` ở lần thứ hai. Script báo
+accuracy, FPR, recall SCAM, độ trễ và chi phí, đồng thời lưu telemetry từng mẫu.
+Khi có `--rag`, script không dùng cache lời gọi hội đồng của lần baseline.
 
 Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy đặt `POSTGRES_PASSWORD` trong tệp `.env`.
 
