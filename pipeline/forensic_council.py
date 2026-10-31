@@ -453,7 +453,8 @@ Hãy kiểm tra xem phân tích trên có hợp lý không. Trả về JSON:
             "estimated_council_cost_usd": round(0.00015 * max(1, total_api_calls or len(completed_results)), 6),
         }
 
-    async def evaluate_council(self, message: str, active_roles: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def evaluate_council(self, message: str, active_roles: Optional[List[str]] = None,
+                               url_evidence: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Coordinates forensic specialists concurrently with Early-Exit Fast-Path.
         Supports 3-agent consolidated architecture and privacy PII masking.
@@ -462,6 +463,8 @@ Hãy kiểm tra xem phân tích trên có hợp lý không. Trả về JSON:
 
         # Step 1: Pre-inference PII Masking Shield (Decree 13/2023/ND-CP compliance)
         sanitized_message, pii_entities = mask_pii(message)
+        if url_evidence:
+            sanitized_message += "\n\nBằng chứng tra cứu URL (không suy ra an toàn khi không có khớp):\n" + json.dumps(url_evidence, ensure_ascii=False)
 
         tasks = []
         roles_to_run = active_roles or self.active_roles or list(self.specialists.keys())
@@ -504,6 +507,7 @@ Hãy kiểm tra xem phân tích trên có hợp lý không. Trả về JSON:
         consensus_output["pii_redacted"] = bool(pii_entities.get("phones") or pii_entities.get("bank_accounts") or pii_entities.get("citizen_ids"))
         return consensus_output
 
-    def evaluate_sync(self, message: str, active_roles: Optional[List[str]] = None) -> Dict[str, Any]:
+    def evaluate_sync(self, message: str, active_roles: Optional[List[str]] = None,
+                      url_evidence: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Synchronous wrapper for integration with standard pipelines."""
-        return asyncio.run(self.evaluate_council(message, active_roles=active_roles))
+        return asyncio.run(self.evaluate_council(message, active_roles=active_roles, url_evidence=url_evidence))

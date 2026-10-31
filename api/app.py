@@ -14,6 +14,7 @@ import sys
 import time
 import uuid
 import logging
+import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
@@ -31,6 +32,7 @@ load_dotenv(os.path.join(ROOT_DIR, ".env"))
 from pipeline.two_tier_router import TwoTierRouter
 from api.visobert_app import router as visobert_router
 from pipeline.persistence import check_database, save_scan
+from scripts.update_phishtank import feed_path, main as download_phishtank_feed
 from api.schemas import (
     ScanRequest,
     StandardScanResponse,
@@ -70,11 +72,20 @@ app.add_middleware(
 )
 
 router_instance: TwoTierRouter = None
+_phishtank_bootstrap_started = False
+
+
+def _download_missing_phishtank_feed():
+    """Report the outcome of the one-time background download in API logs."""
+    if download_phishtank_feed() == 0:
+        logger.info("PhishTank download completed; Tier 1 will use feed: %s", feed_path())
+    else:
+        logger.warning("PhishTank download failed; Tier 1 will report this source as unavailable until a feed exists. The next API startup will retry.")
 
 
 @app.on_event("startup")
 def startup_event():
-    global router_instance
+    global router_instance, _phishtank_bootstrap_started
     logger.info("Initializing ScamShield TwoTierRouter...")
     try:
         router_instance = TwoTierRouter(
@@ -84,6 +95,21 @@ def startup_event():
             council_config_path=os.path.join(ROOT_DIR, "config", "council_registry.yaml"),
             use_council=os.getenv("USE_COUNCIL", "true").lower() == "true",
         )
+        safe_browsing_key = router_instance.url_signals.safe_browsing.api_key
+        if safe_browsing_key and not safe_browsing_key.lower().startswith("your_"):
+            logger.info("Safe Browsing configured; API key will be verified on the first URL lookup.")
+        else:
+            logger.warning("Safe Browsing unavailable: SAFE_BROWSING_API_KEY is missing or a placeholder.")
+
+        path = feed_path()
+        if path.is_file():
+            logger.info("PhishTank feed file found: %s (%d bytes); Tier 1 will use this snapshot.", path, path.stat().st_size)
+        elif os.getenv("PHISHTANK_AUTO_DOWNLOAD", "true").lower() == "true" and not _phishtank_bootstrap_started:
+            _phishtank_bootstrap_started = True
+            logger.info("PhishTank feed missing at %s; starting one-time background download.", path)
+            threading.Thread(target=_download_missing_phishtank_feed, name="phishtank-bootstrap", daemon=True).start()
+        elif not _phishtank_bootstrap_started:
+            logger.warning("PhishTank feed missing at %s; automatic download is disabled.", path)
         logger.info("ScamShield TwoTierRouter successfully initialized and ready for requests.")
     except Exception as e:
         logger.error(f"Failed to initialize TwoTierRouter: {e}", exc_info=True)
@@ -150,7 +176,12 @@ def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
             "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
             "Thông báo cho người thân, chặn số liên lạc và gửi báo cáo lừa đảo lên hệ thống.",
         ]
-    elif risk_level in ["SUSPICIOUS", "MEDIUM", "UNKNOWN"]:
+    elif risk_level == "UNKNOWN":
+        return [
+            "Chưa đủ bằng chứng để kết luận; kiểm tra lại qua kênh chính thức hoặc nguồn độc lập.",
+            "Không cung cấp OTP, mật khẩu hoặc thông tin tài chính khi chưa xác minh.",
+        ]
+    elif risk_level in ["SUSPICIOUS", "MEDIUM"]:
         return [
             "Tin nhắn có dấu hiệu bất thường, cần kiểm tra lại qua kênh liên hệ chính thống.",
             "Xác minh danh tính người gửi qua số điện thoại tổng đài chính thức của đơn vị liên quan.",
@@ -165,8 +196,7 @@ def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
 def scan_message(req: ScanRequest):
     """
     Main Scan Endpoint conforming to ScamShield Contract (docs/04_API_CONTRACTS_AND_SCHEMAS.md).
-    Tier 1 runs the trained ViSoBERT model using its saved calibration and
-    decision thresholds. REVIEW-band messages escalate to Tier 2 3-Agent Council.
+    SMS uses ViSoBERT plus URL signals; standalone URL uses URL signals only.
     """
     global router_instance
     if not router_instance:
@@ -177,10 +207,10 @@ def scan_message(req: ScanRequest):
             detail="AI Pipeline Engine is still initializing. Please retry shortly.",
         )
 
-    content_to_scan = req.content or req.message or ""
+    content_to_scan = req.content
 
     try:
-        raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2)
+        raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
     except Exception as e:
         logger.error(f"Inference error during scan: {e}", exc_info=True)
         return StandardScanResponse(
@@ -194,7 +224,10 @@ def scan_message(req: ScanRequest):
     final_label = raw_res.get("final_label", "")
     raw_risk = raw_res.get("risk_level", "LOW").upper()
 
-    if final_label in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"}:
+    if final_label == "UNKNOWN":
+        risk_level = "UNKNOWN"
+        risk_score = None
+    elif final_label in {"REVIEW", "SUSPICIOUS_REVIEW"}:
         risk_level = "SUSPICIOUS"
         risk_score = round(float(raw_res.get("tier1_telemetry", {}).get("scam_prob", 0.5)) * 100.0, 1)
     elif is_scam or final_label == "SCAM-RISK":
@@ -272,11 +305,7 @@ def scan_message(req: ScanRequest):
         verdict_str = "UNKNOWN" if raw_res.get("final_label") in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"} else "SCAM_RISK" if is_scam else "LOW_RISK"
         save_scan(
             content=req.content,
-            input_type=(
-                req.check_type
-                if req.check_type in {"URL", "PHONE", "BANK_ACCOUNT"}
-                else "MESSAGE"
-            ),
+            input_type=req.check_type,
             core_check_id=req.core_check_id,
             raw_result=raw_res,
             verdict=verdict_str,
@@ -303,7 +332,7 @@ def scan_message_raw(req: ScanRequest):
     """Debug endpoint returning exact internal router output dictionary."""
     if not router_instance:
         raise HTTPException(status_code=503, detail="AI Engine not initialized")
-    return router_instance.classify(req.content, force_tier2=req.force_tier2)
+    return router_instance.classify(req.content, force_tier2=req.force_tier2, check_type=req.check_type)
 
 
 if __name__ == "__main__":

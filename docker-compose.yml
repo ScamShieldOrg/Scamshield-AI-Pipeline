@@ -25,6 +25,8 @@ services:
     container_name: scamshield-ai-engine
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/app/data
     env_file:
       - path: .env
         required: false
@@ -42,6 +44,8 @@ services:
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       QWEN_API_KEY: ${QWEN_API_KEY:-}
       VIBI_BASE_URL: ${VIBI_BASE_URL:-https://vibi.top/v1}
+      SAFE_BROWSING_API_KEY: ${SAFE_BROWSING_API_KEY:-}
+      PHISHTANK_FEED_PATH: /app/data/phishtank_online_valid.csv.gz
     depends_on:
       postgres:
         condition: service_healthy

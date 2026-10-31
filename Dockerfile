@@ -26,6 +26,7 @@ COPY pipeline /app/pipeline
 COPY config /app/config
 COPY models /app/models
 COPY api /app/api
+COPY scripts /app/scripts
 COPY demo_scamshield_mvp.py /app/
 
 # Expose microservice port

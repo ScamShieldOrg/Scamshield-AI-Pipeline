@@ -11,47 +11,32 @@
 
 ## 🏛️ Kiến trúc bộ định tuyến AI hai cấp
 
-```
-                      [ Tin nhắn người dùng ]
-                                 │
-                                 ▼
-                     ┌───────────────────────┐
-                     │   TIER 1 (Fast-Path)  │
-                     │ ViSoBERT ONNX / PyTorch│
-                     │ Local inference        │
-                     │  Chi phí: $0.00       │
-                     └───────────┬───────────┘
-                                 │
-                   Độ tự tin c >= τ (0.90)?
-                         /               \
-                   CÓ  /                   \  KHÔNG (Phân vân)
-                     ▼                       ▼
-          ┌─────────────────────┐  ┌───────────────────────────────────┐
-          │  PHẢN HỒI TỨC THÌ   │  │        TIER 2 (Deep Forensic)     │
-          │  (80-85% lưu lượng) │  │   Hội đồng Pháp y 5 Tác tử LLM    │
-          │  Không tốn phí Cloud │  │ (Gemini, Claude, GPT, DeepSeek)  │
-          └─────────────────────┘  │   - Borda Consensus               │
-                                   │   - Anti-Alarm-Fatigue Defender   │
-                                   │   - Early-Exit (4-1 / 5-0)        │
-                                   └─────────────────┬─────────────────┘
-                                                     │
-                                                     ▼
-                                          [ Phán quyết chi tiết ]
+```text
+SMS → ViSoBERT + tra cứu các URL trong tin nhắn → trả trực tiếp hoặc chuyển hội đồng
+URL đứng riêng → PhishTank (feed cục bộ) + Google Safe Browsing → cảnh báo nếu khớp, còn lại UNKNOWN
+PHONE / BANK_ACCOUNT → Core backend xử lý; AI Pipeline không nhận hai check_type này
 ```
 
+Với SMS, yêu cầu có `force_tier2=true` cũng chuyển lên tầng 2 sau khi chạy ViSoBERT.
+Tỷ lệ yêu cầu đi mỗi nhánh phụ thuộc vào dữ liệu thực tế; báo cáo trên tập kiểm thử
+hiện tại ghi nhận **2,65%** mẫu nằm trong dải REVIEW. Tham số
+`TIER1_CONFIDENCE_THRESHOLD` (`τ=0.90`) vẫn được truyền vào router nhưng chưa được
+dùng trong điều kiện định tuyến hiện tại.
+
 1. **Cấp 1 (phân loại cục bộ)**:
-   - Bộ phân loại **ViSoBERT** đã tinh chỉnh chạy bằng ONNX Runtime trên CPU khi có tệp ONNX hợp lệ; nếu không, hệ thống thử dùng checkpoint PyTorch. Tệp ONNX hiện được xuất ở độ chính xác thông thường (FP32), chưa được lượng tử hóa INT8.
+   - Bộ phân loại **ViSoBERT** đã tinh chỉnh chạy bằng ONNX Runtime trên CPU khi có tệp ONNX hợp lệ; nếu khởi tạo ONNX thất bại, hệ thống thử dùng checkpoint PyTorch trên CUDA hoặc CPU. Tệp ONNX hiện được xuất ở độ chính xác FP32, chưa được lượng tử hóa INT8.
    - Khi huấn luyện, mô hình dùng Cross Entropy có trọng số lớp, với trọng số lớp lừa đảo là **5.0**. Nhiệt độ hiệu chỉnh được học trên tập xác thực; giá trị lưu trong báo cáo huấn luyện hiện tại là **T = 1.4015**. Bộ phân loại áp dụng các ngưỡng 0.35 và 0.85 để đưa ra một trong ba kết quả: HAM, REVIEW hoặc SCAM.
-   - Không có bộ lọc từ khóa riêng để quyết định Brand Spoofing, tên miền đáng ngờ hay bẫy OTP. Một số heuristics tạo chỉ số radar phục vụ trình bày kết quả; chúng không thay đổi nhãn phân loại của ViSoBERT.
-2. **Cấp 2 (hội đồng phân tích chuyên sâu trên đám mây)**:
-   - Kích hoạt khi độ tự tin Tier 1 $< \tau = 0.90$ (khoảng 15–20% lưu lượng khó, mơ hồ).
-   - Hội đồng 5 Agent chuyên môn hóa:
-     1. `Cyber Threat & Malicious URL Inspector` (Chuyên gia kỹ thuật IOC & link)
-     2. `Social Engineering & Urgency Profiler` (Chuyên gia tâm lý cưỡng ép, tạo gấp gáp)
-     3. `Vietnamese Linguistic & Teencode Analyst` (Chuyên gia teencode, lóng tiếng Việt)
-     4. `Banking & Financial Protocol Verifier` (Chuyên gia quy chuẩn ngân hàng)
-     5. `Public Defender / Anti-Alarm-Fatigue Advocate` (Chuyên gia phản biện chống báo động giả)
-   - Tối ưu hiệu năng: Cơ chế **Early-Exit** (dừng sớm khi đạt đa số áp đảo 4-1 hoặc 5-0), **Circuit Breaker** (tự ngắt và chuyển sang mô hình dự phòng khi gặp lỗi 429).
+   - URL trong SMS được tra PhishTank và Google Safe Browsing. Nếu URL khớp nguồn đe dọa nhưng ViSoBERT dự đoán HAM, yêu cầu được chuyển tầng 2; khi tầng 2 không khả dụng, kết quả là `UNKNOWN`. URL đứng riêng không chạy ViSoBERT.
+   - Không có bộ lọc từ khóa riêng để quyết định Brand Spoofing hay bẫy OTP. Một số heuristics tạo chỉ số radar phục vụ trình bày kết quả; chúng không thay đổi nhãn phân loại của ViSoBERT.
+2. **Cấp 2 (hội đồng phân tích chuyên sâu)**:
+   - Với SMS, chạy khi ViSoBERT trả `REVIEW`, tín hiệu URL mâu thuẫn với kết quả HAM, hoặc yêu cầu đặt `force_tier2=true`.
+   - Hội đồng gồm ba vai trò cấu hình trong `config/council_registry.yaml`:
+     1. `Cyber-Financial & Banking Security Analyst`: URL, hạ tầng kỹ thuật và quy trình ngân hàng.
+     2. `Psycholinguistic & Vietnamese Slang Profiler`: thao túng tâm lý, tiếng lóng và teencode.
+     3. `Public Defender & Anti-False-Positive Advocate`: tìm căn cứ hợp lệ để hạn chế báo động giả.
+   - Trước khi gửi đến hội đồng, hệ thống che số điện thoại, giấy tờ tùy thân và số tài khoản phát hiện được. Các vai trò chạy song song; mỗi vai trò có mô hình phân tích chính (*maker*), mô hình thẩm định (*checker*) và chuỗi mô hình dự phòng. Nếu các lời gọi đám mây thất bại, vai trò dùng heuristic cục bộ.
+   - Điểm đồng thuận là trung bình xác suất lừa đảo theo trọng số vai trò. Khi Defender bỏ phiếu `LOW-RISK` với độ tin cậy ít nhất 0.80, điểm giảm 0.25. Hội đồng trả `SCAM-RISK`, `LOW-RISK` hoặc `UNKNOWN` theo ngưỡng và tình trạng mâu thuẫn phiếu. Cấu hình Early-Exit hiện yêu cầu **3 phiếu đồng nhất trên 3 vai trò**, nên không bỏ qua vai trò nào trong cấu hình mặc định. Circuit Breaker tạm ngắt mô hình lỗi và thử mô hình dự phòng.
+   - Nếu hội đồng gặp lỗi ở cấp điều phối, router thử một Gemini LLM qua `ModelRegistry`; nếu tầng 2 vẫn không khả dụng, router giữ kết quả ViSoBERT, bao gồm nhãn `REVIEW` khi chưa thể kết luận. Trường hợp URL khớp nguồn đe dọa nhưng ViSoBERT trả HAM giữ `UNKNOWN`. Nhánh Gemini LLM đơn lẻ hiện chưa dùng bước che PII của hội đồng.
 
 ---
 
@@ -74,24 +59,24 @@ Scamshield-AI-Pipeline/
 │   └── schemas.py            # Pydantic data contracts (chuẩn hóa I/O)
 │
 ├── config/                   # Cấu hình độc lập (Zero-hardcoding)
-│   ├── council_registry.yaml # Cấu hình 5 Chuyên gia Hội đồng Pháp y
+│   ├── council_registry.yaml # Cấu hình 3 vai trò Hội đồng Pháp y
 │   └── gemini_models.yaml    # Cấu hình Dynamic Model Registry
 │
 ├── models/                   # Trọng số & Tokenizer Tier 1 (Quản lý qua Git LFS)
-│   ├── visobert_tier1.onnx   # ONNX Model (~390MB)
-│   ├── scamshield_config.json
-│   ├── tokenizer.json
-│   └── config.json
+│   ├── visobert_finetuned/   # Checkpoint, tokenizer, ONNX, training_report.json
+│   └── scamshield_config.json # Cấu hình cũ; bộ suy luận đọc training_report.json
 │
 ├── pipeline/                 # Core AI Engine
 │   ├── two_tier_router.py    # Orchestrator định tuyến 2 tầng
-│   ├── visobert_classifier.py# ViSoBERT Production Classifier (ONNX CPU Fast-Path + PyTorch)
-│   ├── forensic_council.py   # 5-Agent Multi-LLM Forensic Council (Maker-Checker & Defender Veto)
+│   ├── visobert_classifier.py # ViSoBERT: ưu tiên ONNX CPU, dự phòng PyTorch
+│   ├── forensic_council.py   # Hội đồng 3 vai trò (Maker-Checker, Defender)
+│   ├── pii_masking.py        # Che PII trước lời gọi hội đồng
+│   ├── persistence.py        # Lưu kết quả vào PostgreSQL
 │   └── model_registry.py     # Dynamic Cloud Model Registry
 │
 ├── scripts/                  # Scripts benchmark, training & ONNX export
 │   ├── train_visobert.py     # Tinh chỉnh ViSoBERT với trọng số lớp SCAM = 5.0
-│   ├── export_visobert_onnx.py # Xuất ONNX Runtime opset 17 (FP32)
+│   ├── export_visobert_onnx.py # Xuất ONNX opset 17 (FP32)
 │   └── evaluate_council_benchmark.py
 │
 └── tests/                    # Kiểm thử tự động
@@ -134,7 +119,49 @@ Tạo tệp `.env` từ mẫu `.env.example`:
 ```bash
 cp .env.example .env
 ```
-Điền `GEMINI_API_KEY` và các khóa API tùy chọn nếu sử dụng nhiều nhà cung cấp cho Cấp 2.
+Điền `OPENAI_API_KEY` hoặc `ANTHROPIC_API_KEY` cho mô hình maker qua proxy
+`VIBI_BASE_URL`, và `GEMINI_API_KEY` hoặc `GOOGLE_API_KEY` cho checker, mô hình dự
+phòng và nhánh Gemini LLM đơn lẻ. Nếu không có khóa dùng được, từng vai trò của
+hội đồng có thể trả kết quả heuristic cục bộ; đó không phải kết quả từ LLM.
+
+### Dữ liệu URL cho Tier 1
+
+`SAFE_BROWSING_API_KEY` là khóa riêng cho Safe Browsing v5, không dùng chung biến
+`GOOGLE_API_KEY` của Gemini. Bộ tra cứu giải mã phản hồi Protocol Buffers của
+`urls.search` và dùng `cacheDuration` do Google trả về. Khi API khởi động, nếu
+chưa có feed PhishTank ở
+`data/phishtank_online_valid.csv.gz`, nó tải feed công khai một lần trong nền.
+Nếu đã có file, Tier 1 dùng dữ liệu đó ngay, kể cả khi file đã cũ; không tải
+lại định kỳ. Có thể để trống `PHISHTANK_APP_KEY`; nếu có khóa thì lần tải dùng
+khóa đó. PhishTank giới hạn lượt tải feed công khai không có khóa. File được lưu
+trong thư mục `data/` của project (Compose cũng dùng thư mục này) và không được
+commit. Lần tra cứu đầu tiên có thể thấy PhishTank `UNAVAILABLE` trong lúc tải.
+Nếu tải thất bại, lần khởi động API tiếp theo sẽ thử lại. Có thể chạy
+`python scripts/update_phishtank.py` để tải thủ công khi thiếu file, hoặc
+`python scripts/update_phishtank.py --force` để chủ động thay bản hiện có.
+Đặt `PHISHTANK_AUTO_DOWNLOAD=false` nếu không muốn API tự tải.
+
+Feed cũ là ảnh chụp tại thời điểm tải; một URL từng nằm trong danh sách có thể
+đã thay đổi trạng thái. Cần xem thời điểm file trong telemetry khi đánh giá kết
+quả. URL không khớp nguồn nào được trả `UNKNOWN`, không tự kết luận `SAFE`.
+Trong signal Safe Browsing, `lookup_status=SUCCESS` và `http_status=200` nghĩa là
+đã tra cứu thành công; `known_threat_match=false` cùng `status=NO_MATCH` chỉ
+nghĩa là không khớp danh sách đe dọa đã biết. Khi chưa chạy hoặc tra cứu lỗi,
+`known_threat_match=null` và `lookup_status` lần lượt là `NOT_RUN` hoặc `FAILED`.
+Nguồn Safe Browsing chỉ được phép dùng phi thương mại; sản phẩm thương mại cần
+thay bằng Google Web Risk. `urls.search` gửi URL gốc cho Google, gồm cả đường
+dẫn và query; cân nhắc dữ liệu nhạy cảm trước khi bật khóa này.
+
+Tier 1 chỉ so khớp URL, không tải trang hay theo chuyển hướng. `confidence=1.0`
+cho URL khớp là chỉ báo **khớp danh sách nhị phân**, không phải xác suất mô hình;
+`telemetry.tier1.confidence_kind` ghi rõ điều này.
+Khi kết quả là `UNKNOWN`, `risk_score` là `null` để không hiển thị nhầm thành
+điểm rủi ro thấp.
+Đánh giá trên CSV độc lập có cột `url,label` (`1` là URL độc hại đã xác minh,
+`0` là URL lành tính đã xác minh) bằng
+`python scripts/evaluate_url_reputation.py path/to/url_test.csv`. Báo cáo tách
+tỷ lệ cảnh báo sai, tỷ lệ phát hiện và tỷ lệ `UNKNOWN`; không tính `UNKNOWN` là
+`SAFE`. Repo hiện chưa có tập URL độc lập như vậy.
 
 ### 4. Khởi chạy dịch vụ REST API
 
@@ -181,7 +208,7 @@ Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy �
 ```json
 {
   "status": "healthy",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "service": "ScamShield AI Pipeline Engine",
   "tier1_ready": true,
   "tier2_ready": true,
@@ -189,17 +216,22 @@ Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy �
 }
 ```
 
-### 2. Quét tin nhắn lừa đảo: `POST /api/v1/scan`
+### 2. Quét SMS hoặc URL: `POST /api/v1/scan`
+
+`content` là trường bắt buộc chứa nội dung cần quét. Endpoint này không còn nhận
+`message` làm tên thay thế. `check_type` là trường bắt buộc, chỉ nhận `SMS` hoặc
+`URL`; Core xử lý `PHONE` và `BANK_ACCOUNT` mà không gọi AI Pipeline.
 
 **Yêu cầu:**
 ```json
 {
   "content": "Vietcombank: Tai khoan cua ban tam khoa do bat thuong. Dang nhap https://vcb-xacthuc.xyz de mo khoa.",
-  "check_type": "TEXT"
+"check_type": "SMS"
 }
 ```
 
-**Phản hồi (định dạng chuẩn hóa cho Spring Boot và giao diện người dùng):**
+**Phản hồi minh họa** (định dạng chuẩn hóa cho Spring Boot và giao diện người dùng;
+`scan_id`, thời gian, xác suất và độ trễ thay đổi theo từng lần chạy):
 ```json
 {
   "status": "success",
@@ -216,9 +248,9 @@ Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy �
     },
     "radar_metrics": {
       "urgency": 15,
-      "authority_impersonation": 95,
+      "authority_impersonation": 75,
       "financial_lure": 15,
-      "suspicious_channel": 85,
+      "suspicious_channel": 70,
       "data_harvesting": 10
     },
     "council_breakdown": null,
@@ -235,10 +267,13 @@ Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy �
       "tier1": {
         "label": "SCAM",
         "class_id": 1,
-        "confidence": 0.9960368275642395,
-        "scam_prob": 0.9960368275642395,
+        "confidence": 0.996,
+        "scam_prob": 0.996,
         "threshold_low": 0.35,
         "threshold_high": 0.85,
+        "temperature": 1.4015225172042847,
+        "engine": "onnx",
+        "model_version": "1",
         "ham_prob": 0.004,
         "latency_ms": 651.26,
         "cost_usd": 0,
@@ -246,6 +281,10 @@ Trước khi triển khai ngoài môi trường phát triển cục bộ, hãy �
         "status": "CONFIDENT",
         "matched_cues": [],
         "reason": "ViSoBERT P(SCAM)=0.9960; REVIEW band=[0.35, 0.85]."
+      },
+      "tier2": {
+        "status": "SKIPPED",
+        "reason": "FastPath satisfied; no cloud escalation needed."
       },
       "final_label": "SCAM"
     }
@@ -269,7 +308,7 @@ tầng, `scripts/train_visobert.py` loại các tin nhắn kiểm thử khỏi d
 luyện. Quá trình sẽ dừng nếu phát hiện nhãn mâu thuẫn.
 
 ```powershell
-.venv/Scripts/python.exe -m pip install -r requirements-training.txt
+.venv/Scripts/python.exe -m pip install -r requirements.txt
 .venv/Scripts/python.exe scripts/train_visobert.py
 ```
 
@@ -287,18 +326,25 @@ Dùng các tùy chọn `--epochs`, `--batch-size`, `--max-length` và `--output-
 điều chỉnh lần chạy. Checkpoint `.safetensors` được quản lý bằng Git LFS theo cấu
 hình của kho mã nguồn.
 
+`models/visobert_finetuned/training_report.json` ghi nhận 1.781 mẫu train,
+314 mẫu validation và 566 mẫu test sau khi loại trùng. Trên tập test, accuracy
+đạt **90,64%**, macro-F1 **88,16%**, recall lớp SCAM **94,78%** và tỷ lệ REVIEW
+**2,65%**. Các số liệu này thuộc tập kiểm thử được cung cấp, không phải ước lượng
+tỷ lệ lưu lượng hay chất lượng trên dữ liệu triển khai thực tế.
+
 ### Xuất bộ phân loại đã huấn luyện sang ONNX
 
 ```powershell
-.venv/Scripts/python.exe -m pip install -r requirements-export.txt
+.venv/Scripts/python.exe -m pip install -r requirements.txt
 .venv/Scripts/python.exe scripts/export_visobert_onnx.py
 ```
 
 Lệnh này tạo `models/visobert_finetuned/visobert_classifier.onnx` và
 `onnx_export_report.json`. Công cụ xuất kiểm tra đồ thị ONNX và so sánh logits
 trên CPU của ONNX Runtime với PyTorch bằng một số tin nhắn mẫu. Thông tin hiệu
-chỉnh và ngưỡng quyết định vẫn nằm trong `training_report.json`. API quét hiện
-dùng checkpoint PyTorch; việc xuất sang ONNX chưa làm thay đổi bộ máy chạy.
+chỉnh và ngưỡng quyết định vẫn nằm trong `training_report.json`. Bộ suy luận của
+API ưu tiên tệp ONNX hợp lệ qua ONNX Runtime trên CPU; nếu khởi tạo thất bại, nó
+thử dùng checkpoint PyTorch trong cùng thư mục.
 
 - **Chạy bản demo dòng lệnh với 10 trường hợp kiểm thử chuẩn:**
   ```bash

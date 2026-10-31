@@ -1,3 +1,7 @@
+import os
+
+os.environ["PHISHTANK_AUTO_DOWNLOAD"] = "false"
+
 import pytest
 from unittest.mock import patch
 

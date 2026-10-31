@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Any
 from .model_registry import ModelRegistry
 from .visobert_classifier import get_visobert_classifier, ViSoBERTClassifier
 from .forensic_council import ForensicCouncil
+from .url_signals import UrlSignals, council_evidence, extract_urls
 
 logger = logging.getLogger("ScamShield.TwoTierRouter")
 if not logger.handlers:
@@ -96,6 +97,7 @@ class TwoTierRouter:
         self.tau = confidence_threshold
         self.use_council = use_council
         self.tier1_classifier = TrainedViSoBERTClassifier()
+        self.url_signals = UrlSignals()
         def usable_key(value: Optional[str]) -> bool:
             return bool(value and not value.lower().startswith("your_"))
 
@@ -115,19 +117,58 @@ class TwoTierRouter:
         mode_str = "3-Agent Forensic Council" if use_council else "Single Cloud LLM"
         logger.info(f"TwoTierRouter Initialized. Fallback Threshold (tau) = {self.tau:.2f} | Tier-2 Mode: {mode_str}")
 
-    def classify(self, message: str, force_tier2: bool = False) -> Dict[str, Any]:
+    def classify(self, message: str, force_tier2: bool = False, check_type: str = "SMS") -> Dict[str, Any]:
         """
         Process and classify an incoming message through the 2-Tier Architecture.
 
         Args:
-            message: Raw Vietnamese message text.
+            message: Vietnamese SMS text or a standalone HTTP(S) URL.
             force_tier2: Force escalation to Tier 2 regardless of Tier 1 confidence.
+            check_type: Exactly SMS or URL. Core handles phone and bank-account checks.
 
         Returns:
             dict containing final classification, detailed Tier 1 & Tier 2 telemetry,
             routing rationale, latency, and cost breakdown.
         """
         start_overall = time.perf_counter()
+        if check_type not in {"SMS", "URL"}:
+            raise ValueError("check_type must be SMS or URL")
+
+        if check_type == "URL":
+            url_evidence = self.url_signals.analyze(message.strip())
+            matched = url_evidence["known_threat_match"]
+            matched_sources = [s["source"] for s in url_evidence["signals"] if s["status"] == "MATCH"]
+            threat_types = [kind for s in url_evidence["signals"] for kind in s.get("threat_types", [])]
+            phishing_match = "phishtank" in matched_sources or "SOCIAL_ENGINEERING" in threat_types
+            explanation = (
+                f"URL khớp danh sách mối đe dọa đã biết của {', '.join(matched_sources)}."
+                if matched else "Chưa có đủ bằng chứng để kết luận URL an toàn hay nguy hiểm."
+            )
+            return {
+                "message": message,
+                "final_label": "SCAM-RISK" if matched else "UNKNOWN",
+                "final_confidence": 1.0 if matched else 0.0,
+                "is_scam": matched,
+                "scam_type": "Phishing URL" if phishing_match else ("Known URL Threat" if matched else "Chưa phân loại"),
+                "risk_level": "HIGH" if matched else "UNKNOWN",
+                "explanation": explanation,
+                "routing_path": "TIER_1_URL_REPUTATION",
+                "routing_reason": "Known threat match" if matched else "No positive known-threat match",
+                "tier_used": "Tier 1 (URL reputation)",
+                "model_name": "PhishTank + Google Safe Browsing",
+                "tier1_telemetry": {"label": "SCAM-RISK" if matched else "UNKNOWN", "engine": "url_reputation",
+                                    "url_evidence": url_evidence, "confidence_kind": "binary_threat_match",
+                                    "latency_ms": round((time.perf_counter() - start_overall) * 1000, 2),
+                                    "reason": explanation},
+                "tier2_telemetry": {"status": "SKIPPED", "reason": "URL-only routing"},
+                "total_latency_ms": round((time.perf_counter() - start_overall) * 1000, 2),
+                "total_cost_usd": 0.0,
+                "escalated": False,
+            }
+
+        url_evidence = [self.url_signals.analyze(url) for url in extract_urls(message)]
+        url_threat_match = any(item["known_threat_match"] for item in url_evidence)
+        tier2_url_evidence = council_evidence(url_evidence)
 
         # -------------------------------------------------------------
         # Step 1: Execute Tier 1 Local Fast-Path (ViSoBERT CPU)
@@ -154,13 +195,15 @@ class TwoTierRouter:
             "is_sure": t1_is_sure,
             "status": "CONFIDENT" if t1_is_sure else "UNSURE",
             "matched_cues": t1_result.get("matched_cues", []),
+            "url_evidence": url_evidence,
             "reason": f"ViSoBERT P(SCAM)={scam_prob:.4f}; REVIEW band=[{low:.2f}, {high:.2f}].",
         }
 
         # -------------------------------------------------------------
         # Case A: Fast-Path Direct Exit (Tier 1 is Confident >= tau)
         # -------------------------------------------------------------
-        if t1_is_sure and not force_tier2:
+        url_conflict = url_threat_match and t1_result["label"] == "HAM"
+        if t1_is_sure and not force_tier2 and not url_conflict:
             total_elapsed_ms = (time.perf_counter() - start_overall) * 1000
             routing_reason = f"ViSoBERT P(SCAM)={scam_prob:.4f} falls outside REVIEW band [{low:.2f}, {high:.2f}]."
             return {
@@ -189,17 +232,17 @@ class TwoTierRouter:
         # Case B: Escalate to Tier 2 (Dynamic Cloud Fallback / Council)
         # Reason: Ambiguous case (REVIEW band) or forced audit
         # -------------------------------------------------------------
-        fallback_trigger = "FORCED_AUDIT" if force_tier2 else "VISOBERT_REVIEW_BAND"
+        fallback_trigger = "FORCED_AUDIT" if force_tier2 else "URL_THREAT_CONFLICT" if url_conflict else "VISOBERT_REVIEW_BAND"
 
         if not self.tier2_available:
             return {
                 "message": message,
-                "final_label": t1_result["label"],
-                "final_confidence": t1_confidence,
-                "is_scam": t1_result["label"] == "SCAM",
+                "final_label": "UNKNOWN" if url_conflict else t1_result["label"],
+                "final_confidence": 0.0 if url_conflict else t1_confidence,
+                "is_scam": False if url_conflict else t1_result["label"] == "SCAM",
                 "scam_type": "ViSoBERT text classifier",
-                "risk_level": "MEDIUM" if t1_result["label"] == "REVIEW" else ("HIGH" if t1_result["label"] == "SCAM" else "LOW"),
-                "explanation": "ViSoBERT requires review; Tier 2 is unavailable." if t1_result["label"] == "REVIEW" else "ViSoBERT result; Tier 2 is unavailable.",
+                "risk_level": "UNKNOWN" if url_conflict else ("MEDIUM" if t1_result["label"] == "REVIEW" else ("HIGH" if t1_result["label"] == "SCAM" else "LOW")),
+                "explanation": "URL khớp danh sách mối đe dọa nhưng ViSoBERT dự đoán HAM; Tier 2 không khả dụng." if url_conflict else ("ViSoBERT requires review; Tier 2 is unavailable." if t1_result["label"] == "REVIEW" else "ViSoBERT result; Tier 2 is unavailable."),
                 "routing_path": "TIER_1_REVIEW_TIER_2_UNAVAILABLE",
                 "routing_reason": "No usable Tier 2 provider key is configured.",
                 "tier_used": "Tier 1 (Fine-tuned ViSoBERT)",
@@ -216,16 +259,16 @@ class TwoTierRouter:
             routing_reason = f"ViSoBERT P(SCAM)={scam_prob:.4f} is in REVIEW band; escalating to Tier 2 council."
             logger.info(f"Escalating message to Tier 2 3-Agent Forensic Council. Reason: {fallback_trigger}")
             try:
-                council_res = self.council.evaluate_sync(message)
+                council_res = self.council.evaluate_sync(message, url_evidence=tier2_url_evidence)
                 total_elapsed_ms = (time.perf_counter() - start_overall) * 1000 + t1_result["latency_ms"]
                 return {
                     "message": message,
-                    "final_label": council_res["final_label"],
+                    "final_label": "UNKNOWN" if url_conflict and council_res["final_label"] == "LOW-RISK" else council_res["final_label"],
                     "final_confidence": council_res["consensus_scam_prob"],
                     "is_scam": (council_res["final_label"] in ["SCAM-RISK", "SCAM"]),
                     "scam_type": "Hội đồng Pháp y Đa Tác tử (3 Chuyên gia)",
-                    "risk_level": council_res["risk_level"],
-                    "explanation": council_res["unified_rationale"],
+                    "risk_level": "UNKNOWN" if url_conflict and council_res["final_label"] == "LOW-RISK" else council_res["risk_level"],
+                    "explanation": ("Tín hiệu URL và phân tích nội dung mâu thuẫn; cần xác minh thêm. " if url_conflict and council_res["final_label"] == "LOW-RISK" else "") + council_res["unified_rationale"],
                     "routing_path": "TIER_2_FORENSIC_COUNCIL",
                     "routing_reason": routing_reason,
                     "tier_used": "Tier 2 (3-Agent Forensic Council)",
@@ -255,7 +298,7 @@ class TwoTierRouter:
         logger.info(f"Escalating message to Tier 2 Single Cloud LLM. Reason: {fallback_trigger}")
 
         t2_response = self.tier2_registry.generate_content(
-            prompt=f"Hãy phân tích tin nhắn sau:\n\n{message}",
+            prompt=f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{message}\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}",
             tier="lite",
             system_instruction=SYSTEM_PROMPT_TIER_2,
             temperature=0.1,
@@ -272,10 +315,10 @@ class TwoTierRouter:
 
                 parsed = json.loads(raw_text)
                 is_scam = parsed.get("is_scam", False)
-                final_label = "SCAM-RISK" if is_scam else "LOW-RISK"
+                final_label = "SCAM-RISK" if is_scam else ("UNKNOWN" if url_conflict else "LOW-RISK")
                 final_conf = float(parsed.get("confidence", 0.95))
                 scam_type = parsed.get("scam_type", "Phân tích ngữ cảnh sâu")
-                risk_level = parsed.get("risk_level", "HIGH" if is_scam else "LOW")
+                risk_level = "UNKNOWN" if url_conflict and not is_scam else parsed.get("risk_level", "HIGH" if is_scam else "LOW")
                 explanation = parsed.get("explanation", "Phân tích ngữ cảnh sâu bởi Cloud LLM.")
 
                 total_elapsed_ms = (time.perf_counter() - start_overall) * 1000 + t1_result["latency_ms"]
@@ -317,11 +360,11 @@ class TwoTierRouter:
         err_msg = t2_response.get("error", "OFFLINE")
         return {
             "message": message,
-            "final_label": t1_result["label"],
-            "final_confidence": t1_confidence,
-            "is_scam": (t1_result["label"] == "SCAM"),
+            "final_label": "UNKNOWN" if url_conflict else t1_result["label"],
+            "final_confidence": 0.0 if url_conflict else t1_confidence,
+            "is_scam": False if url_conflict else (t1_result["label"] == "SCAM"),
             "scam_type": "Tier 1 Fallback (Tier 2 Offline)",
-            "risk_level": "MEDIUM" if t1_result["label"] == "REVIEW" else ("HIGH" if t1_result["label"] == "SCAM" else "LOW"),
+            "risk_level": "UNKNOWN" if url_conflict else ("MEDIUM" if t1_result["label"] == "REVIEW" else ("HIGH" if t1_result["label"] == "SCAM" else "LOW")),
             "explanation": f"Tier 2 không khả dụng ({err_msg}). Hệ thống sử dụng kết quả dự đoán của Tier 1 ({t1_confidence*100:.1f}%).",
             "routing_path": "TIER_1_GRACEFUL_DEGRADATION",
             "routing_reason": f"Tier 2 unavailable ({err_msg}); preserving ViSoBERT decision {t1_result['label']}.",
