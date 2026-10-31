@@ -22,6 +22,7 @@ from .visobert_classifier import get_visobert_classifier, ViSoBERTClassifier
 from .forensic_council import ForensicCouncil
 from .url_signals import UrlSignals, council_evidence, extract_urls
 from .rag import RagRetriever, normalize_tier2_input, format_rag_evidence, MODEL_NAME, MODEL_REVISION
+from .prompt_logging import log_tier2_prompt
 
 logger = logging.getLogger("ScamShield.TwoTierRouter")
 if not logger.handlers:
@@ -319,10 +320,13 @@ class TwoTierRouter:
         routing_reason = f"{fallback_trigger}: ViSoBERT P(SCAM)={scam_prob:.4f}; escalating to Tier 2 cloud model."
         logger.info(f"Escalating message to Tier 2 Single Cloud LLM. Reason: {fallback_trigger}")
 
+        fallback_prompt = (f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{tier2_input.message}"
+                           f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}"
+                           f"\n\n{rag_prompt}")
+        log_tier2_prompt(logger, stage="registry_fallback", system_prompt=SYSTEM_PROMPT_TIER_2,
+                         user_prompt=fallback_prompt)
         t2_response = self.tier2_registry.generate_content(
-            prompt=(f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{tier2_input.message}"
-                    f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}"
-                    f"\n\n{rag_prompt}"),
+            prompt=fallback_prompt,
             tier="lite",
             system_instruction=SYSTEM_PROMPT_TIER_2,
             temperature=0.1,

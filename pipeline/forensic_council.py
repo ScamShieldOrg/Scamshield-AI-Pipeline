@@ -37,6 +37,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 from pipeline.pii_masking import mask_pii
 from pipeline.rag import Tier2Input, normalize_tier2_input
+from pipeline.prompt_logging import log_tier2_prompt
 
 logger = logging.getLogger("ScamShield.ForensicCouncil")
 if not logger.handlers:
@@ -279,6 +280,8 @@ Bắt buộc trả về định dạng JSON thuần túy theo schema sau:
             if not self.circuit_breaker.is_available(model):
                 continue
             try:
+                log_tier2_prompt(logger, stage="council_maker", role=role_key, model=model,
+                                 system_prompt=sys_prompt, user_prompt=user_prompt)
                 agent_res = await self._call_provider_model(model, user_prompt, sys_prompt)
                 used_model = model
                 api_calls_count += 1
@@ -303,7 +306,10 @@ Hãy kiểm tra xem phân tích trên có hợp lý không. Trả về JSON:
     "calibrated_prob": 0.0 - 1.0,
     "checker_note": "nhận xét ngắn"
 }}"""
-                checker_res = await self._call_provider_model(checker_model, checker_prompt, "Bạn là Thẩm định viên kiểm tra logic.")
+                checker_system_prompt = "Bạn là Thẩm định viên kiểm tra logic."
+                log_tier2_prompt(logger, stage="council_checker", role=role_key, model=checker_model,
+                                 system_prompt=checker_system_prompt, user_prompt=checker_prompt)
+                checker_res = await self._call_provider_model(checker_model, checker_prompt, checker_system_prompt)
                 api_calls_count += 1
                 if not checker_res.get("approved", True):
                     cal_prob = float(checker_res.get("calibrated_prob", agent_res["scam_prob"]))
