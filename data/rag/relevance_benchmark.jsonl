@@ -1,0 +1,40 @@
+{"query_id":"c01","query":"Ngân hàng nhắn tài khoản bị khóa và yêu cầu bấm link để nhập mật khẩu","source_key":"general","source_group":"general","chunk_no":0,"relevant":true,"split":"calibration"}
+{"query_id":"c01","query":"Ngân hàng nhắn tài khoản bị khóa và yêu cầu bấm link để nhập mật khẩu","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":false,"split":"calibration"}
+{"query_id":"c02","query":"Tin nhắn giả danh ngân hàng yêu cầu cung cấp mã OTP để xác minh","source_key":"general","source_group":"general","chunk_no":0,"relevant":true,"split":"calibration"}
+{"query_id":"c02","query":"Tin nhắn giả danh ngân hàng yêu cầu cung cấp mã OTP để xác minh","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":false,"split":"calibration"}
+{"query_id":"c03","query":"Được mời đầu tư tiền số lãi cao qua tin nhắn lạ","source_key":"general","source_group":"general","chunk_no":1,"relevant":true,"split":"calibration"}
+{"query_id":"c03","query":"Được mời đầu tư tiền số lãi cao qua tin nhắn lạ","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":false,"split":"calibration"}
+{"query_id":"c04","query":"Tuyển cộng tác viên trực tuyến nhận hoa hồng rồi yêu cầu nạp tiền","source_key":"general","source_group":"general","chunk_no":1,"relevant":true,"split":"calibration"}
+{"query_id":"c04","query":"Tuyển cộng tác viên trực tuyến nhận hoa hồng rồi yêu cầu nạp tiền","source_key":"fine","source_group":"fine","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c05","query":"Người tự xưng công an gửi link nộp phạt nguội qua SMS","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":true,"split":"calibration"}
+{"query_id":"c05","query":"Người tự xưng công an gửi link nộp phạt nguội qua SMS","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c06","query":"Tin nhắn phạt vi phạm giao thông đe dọa tăng mức phạt sau 48 giờ","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":true,"split":"calibration"}
+{"query_id":"c06","query":"Tin nhắn phạt vi phạm giao thông đe dọa tăng mức phạt sau 48 giờ","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c07","query":"Cảnh báo đường link giả mạo cổng dịch vụ công để thanh toán phạt nguội","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":true,"split":"calibration"}
+{"query_id":"c07","query":"Cảnh báo đường link giả mạo cổng dịch vụ công để thanh toán phạt nguội","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c08","query":"Sau khi nhập OTP vào link nộp phạt giả cần khóa tài khoản ngân hàng","source_key":"fine","source_group":"fine","chunk_no":1,"relevant":true,"split":"calibration"}
+{"query_id":"c08","query":"Sau khi nhập OTP vào link nộp phạt giả cần khóa tài khoản ngân hàng","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c09","query":"Tin nhắn mời đến nhận ổ SSD đã bảo hành tại cửa hàng","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c09","query":"Tin nhắn mời đến nhận ổ SSD đã bảo hành tại cửa hàng","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":false,"split":"calibration"}
+{"query_id":"c10","query":"Mã xác thực đăng nhập ứng dụng giao hàng, không chia sẻ mã này","source_key":"general","source_group":"general","chunk_no":1,"relevant":false,"split":"calibration"}
+{"query_id":"c10","query":"Mã xác thực đăng nhập ứng dụng giao hàng, không chia sẻ mã này","source_key":"fine","source_group":"fine","chunk_no":0,"relevant":false,"split":"calibration"}
+{"query_id":"h01","query":"Người gọi tự xưng công an xã yêu cầu cài ứng dụng VNeID qua link lạ","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":true,"split":"holdout"}
+{"query_id":"h01","query":"Người gọi tự xưng công an xã yêu cầu cài ứng dụng VNeID qua link lạ","source_key":"shopping","source_group":"shopping","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h02","query":"Tin nhắn yêu cầu cập nhật thông tin định danh bằng app VNeID giả","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":true,"split":"holdout"}
+{"query_id":"h02","query":"Tin nhắn yêu cầu cập nhật thông tin định danh bằng app VNeID giả","source_key":"shopping","source_group":"shopping","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h03","query":"Đối tượng gửi APK giả mạo VNeID để lấy dữ liệu sinh trắc học","source_key":"vneid","source_group":"vneid","chunk_no":1,"relevant":true,"split":"holdout"}
+{"query_id":"h03","query":"Đối tượng gửi APK giả mạo VNeID để lấy dữ liệu sinh trắc học","source_key":"shopping","source_group":"shopping","chunk_no":1,"relevant":false,"split":"holdout"}
+{"query_id":"h04","query":"Cán bộ yêu cầu người dân đến công an xã trực tiếp thay vì bấm link VNeID","source_key":"vneid","source_group":"vneid","chunk_no":1,"relevant":true,"split":"holdout"}
+{"query_id":"h04","query":"Cán bộ yêu cầu người dân đến công an xã trực tiếp thay vì bấm link VNeID","source_key":"shopping","source_group":"shopping","chunk_no":1,"relevant":false,"split":"holdout"}
+{"query_id":"h05","query":"Sau khi mua hàng online có người gọi hứa hoàn tiền và xin thông tin thẻ","source_key":"shopping","source_group":"shopping","chunk_no":0,"relevant":true,"split":"holdout"}
+{"query_id":"h05","query":"Sau khi mua hàng online có người gọi hứa hoàn tiền và xin thông tin thẻ","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h06","query":"Nhân viên sàn thương mại điện tử giả yêu cầu quét QR nhận hoàn tiền","source_key":"shopping","source_group":"shopping","chunk_no":1,"relevant":true,"split":"holdout"}
+{"query_id":"h06","query":"Nhân viên sàn thương mại điện tử giả yêu cầu quét QR nhận hoàn tiền","source_key":"vneid","source_group":"vneid","chunk_no":1,"relevant":false,"split":"holdout"}
+{"query_id":"h07","query":"Link hỗ trợ đơn hàng giả mạo dẫn tới chiếm quyền điện thoại","source_key":"shopping","source_group":"shopping","chunk_no":1,"relevant":true,"split":"holdout"}
+{"query_id":"h07","query":"Link hỗ trợ đơn hàng giả mạo dẫn tới chiếm quyền điện thoại","source_key":"vneid","source_group":"vneid","chunk_no":1,"relevant":false,"split":"holdout"}
+{"query_id":"h08","query":"Cuộc gọi giả nhân viên bán hàng yêu cầu toàn bộ tiền trong tài khoản","source_key":"shopping","source_group":"shopping","chunk_no":1,"relevant":true,"split":"holdout"}
+{"query_id":"h08","query":"Cuộc gọi giả nhân viên bán hàng yêu cầu toàn bộ tiền trong tài khoản","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h09","query":"Thông báo lịch giao hàng bình thường và mã vận đơn","source_key":"shopping","source_group":"shopping","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h09","query":"Thông báo lịch giao hàng bình thường và mã vận đơn","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h10","query":"Tin nhắn xác nhận bảo hành máy tính đã hoàn tất","source_key":"shopping","source_group":"shopping","chunk_no":0,"relevant":false,"split":"holdout"}
+{"query_id":"h10","query":"Tin nhắn xác nhận bảo hành máy tính đã hoàn tất","source_key":"vneid","source_group":"vneid","chunk_no":0,"relevant":false,"split":"holdout"}

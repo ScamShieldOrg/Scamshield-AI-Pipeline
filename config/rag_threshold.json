@@ -1,0 +1,22 @@
+{
+  "embedding_model": "BAAI/bge-m3",
+  "embedding_version": "5617a9f61b028005a4858fdac845db406aefb181",
+  "similarity_threshold": 0.6536799,
+  "calibration_precision": 1.0,
+  "calibration": {
+    "precision": 1.0,
+    "recall": 0.375,
+    "no_match_rate": 0.7,
+    "accepted": 3,
+    "queries": 10
+  },
+  "holdout": {
+    "precision": 1.0,
+    "recall": 0.25,
+    "no_match_rate": 0.8,
+    "accepted": 2,
+    "queries": 10
+  },
+  "sample_count": 40,
+  "calibrated_at": "2026-10-31T10:24:08.759906+00:00"
+}

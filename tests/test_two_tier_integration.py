@@ -38,7 +38,7 @@ def test_tier1_fastpath_direct_exit_ham():
             "threshold_high": 0.85,
             "engine": "onnx",
         }
-        res = router.route("Thong bao: Quy khach da thanh toan tien dien thanh cong 500.000d.")
+        res = router.classify("Thong bao: Quy khach da thanh toan tien dien thanh cong 500.000d.")
         assert res["routing_path"] == "TIER_1_DIRECT_FASTPATH"
         assert res["escalated"] is False
         assert res["final_label"] in ["HAM", "LOW-RISK"]
@@ -61,7 +61,7 @@ def test_tier1_fastpath_direct_exit_scam():
             "threshold_high": 0.85,
             "engine": "onnx",
         }
-        res = router.route("Tai khoan cua ban bi khoa, bam vao https://vcb-scam.xyz de mo khoa.")
+        res = router.classify("Tai khoan cua ban bi khoa, bam vao https://vcb-scam.xyz de mo khoa.")
         assert res["routing_path"] == "TIER_1_DIRECT_FASTPATH"
         assert res["escalated"] is False
         assert res["final_label"] in ["SCAM", "SCAM-RISK"]
@@ -104,7 +104,7 @@ def test_tier1_review_escalation_to_3agent_council():
             "estimated_council_cost_usd": 0.00045,
         }
         with patch.object(router.council, "evaluate_sync", return_value=mock_council_res):
-            res = router.route("Ngan hang thong bao cap nhat sinh trac hoc theo QĐ 2345.")
+            res = router.classify("Ngan hang thong bao cap nhat sinh trac hoc theo QĐ 2345.")
             assert res["routing_path"] == "TIER_2_FORENSIC_COUNCIL"
             assert res["escalated"] is True
             assert res["final_label"] == "SCAM-RISK"
@@ -114,7 +114,7 @@ def test_tier1_review_escalation_to_3agent_council():
 
 def test_api_scan_endpoint_schema_contract(client):
     """Verify /api/v1/scan adheres to the standard schema expected by Spring Boot backend."""
-    payload = {"message": "Vietcombank: Giao dich thanh toan 50.000 VND tai Circle K."}
+    payload = {"content": "Vietcombank: Giao dich thanh toan 50.000 VND tai Circle K.", "check_type": "SMS"}
     response = client.post("/api/v1/scan", json=payload)
     assert response.status_code == 200
     body = response.json()
@@ -126,3 +126,37 @@ def test_api_scan_endpoint_schema_contract(client):
     assert "radar_metrics" in data
     assert "telemetry" in data
     assert data["verdict"]["risk_level"] in ["SAFE", "SUSPICIOUS", "DANGEROUS", "UNKNOWN"]
+
+
+def test_scan_requires_content_and_does_not_document_message(client):
+    schema = client.get("/openapi.json").json()["components"]["schemas"]["ScanRequest"]
+    assert "content" in schema["required"]
+    assert "message" not in schema["properties"]
+    assert client.post("/api/v1/scan", json={"message": "Tin nhan cu", "check_type": "SMS"}).status_code == 422
+
+
+@pytest.mark.parametrize("check_type", ["TEXT", "PHONE", "BANK_ACCOUNT"])
+def test_scan_rejects_retired_check_types(client, check_type):
+    response = client.post("/api/v1/scan", json={"content": "0123456789", "check_type": check_type})
+    assert response.status_code == 422
+
+
+def test_scan_requires_explicit_check_type(client):
+    assert client.post("/api/v1/scan", json={"content": "Tin nhan"}).status_code == 422
+
+
+def test_api_url_without_match_is_unknown_and_skips_visobert(client):
+    router = TwoTierRouter(use_council=False)
+    router.url_signals.analyze = MagicMock(return_value={
+        "known_threat_match": False, "normalized_value": "https://translate.google.com/",
+        "hostname": "translate.google.com",
+        "signals": [{"source": "phishtank", "status": "NO_MATCH"},
+                    {"source": "safe_browsing", "status": "NO_MATCH"}],
+    })
+    with patch("api.app.router_instance", router), patch.object(router.tier1_classifier, "predict") as predict, patch("api.app.save_scan") as save:
+        response = client.post("/api/v1/scan", json={"content": "https://translate.google.com/", "check_type": "URL"})
+    assert response.status_code == 200
+    assert response.json()["data"]["verdict"]["risk_level"] == "UNKNOWN"
+    assert response.json()["data"]["verdict"]["risk_score"] is None
+    predict.assert_not_called()
+    assert save.call_args.kwargs["input_type"] == "URL"
