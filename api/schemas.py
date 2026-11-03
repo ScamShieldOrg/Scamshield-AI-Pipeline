@@ -28,7 +28,7 @@ class ScanRequest(BaseModel):
 
 class AgentFinding(BaseModel):
     role: str
-    verdict: Literal["SAFE", "SUSPICIOUS", "DANGEROUS", "UNKNOWN"]
+    verdict: Literal["SCAM_RISK", "LOW_RISK", "UNKNOWN"]
     score: float
     finding: str
 
@@ -50,7 +50,7 @@ class RadarMetrics(BaseModel):
 
 
 class Verdict(BaseModel):
-    risk_level: Literal["SAFE", "SUSPICIOUS", "DANGEROUS", "UNKNOWN"]
+    risk_level: Literal["SCAM_RISK", "LOW_RISK", "UNKNOWN"]
     risk_score: Optional[float] = Field(..., ge=0.0, le=100.0, description="Null when risk is UNKNOWN")
     scam_category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
