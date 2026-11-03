@@ -35,7 +35,7 @@ def test_scan_tier1_fastpath_scam():
     res = response.json()
     assert res["status"] == "success"
     data = res["data"]
-    assert data["verdict"]["risk_level"] in ["DANGEROUS", "SUSPICIOUS"]
+    assert data["verdict"]["risk_level"] == "SCAM_RISK"
     assert data["tier_executed"] == 1
     assert len(data["actionable_recommendations"]) > 0
 
@@ -50,7 +50,7 @@ def test_scan_tier1_fastpath_ham():
     res = response.json()
     assert res["status"] == "success"
     data = res["data"]
-    assert data["verdict"]["risk_level"] == "SAFE"
+    assert data["verdict"]["risk_level"] == "LOW_RISK"
     assert data["tier_executed"] == 1
 
 

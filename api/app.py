@@ -30,6 +30,7 @@ if ROOT_DIR not in sys.path:
 load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 from pipeline.two_tier_router import TwoTierRouter
+from pipeline.verdict_contract import normalize_verdict
 from api.visobert_app import router as visobert_router
 from pipeline.persistence import check_database, save_scan
 from pipeline.rag import BgeM3Embedder, RagRetriever, apply_rag_migration
@@ -193,7 +194,7 @@ def _compute_radar_metrics(message: str, is_scam: bool, raw_res: Dict[str, Any])
 
 def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
     """Provides actionable advice conforming to UI contract."""
-    if is_scam or risk_level in ["DANGEROUS", "HIGH", "CRITICAL"]:
+    if risk_level == "SCAM_RISK":
         return [
             "Tuyệt đối không nhấp vào bất kỳ đường link nào trong tin nhắn.",
             "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
@@ -245,22 +246,10 @@ def scan_message(req: ScanRequest):
     confidence = float(raw_res.get("final_confidence", 0.0))
     tier_executed = 2 if raw_res.get("escalated", False) else 1
     final_label = raw_res.get("final_label", "")
-    raw_risk = raw_res.get("risk_level", "LOW").upper()
-
-    if final_label == "UNKNOWN":
-        risk_level = "UNKNOWN"
-        risk_score = None
-    elif final_label in {"REVIEW", "SUSPICIOUS_REVIEW"}:
-        risk_level = "SUSPICIOUS"
-        risk_score = round(float(raw_res.get("tier1_telemetry", {}).get("scam_prob", 0.5)) * 100.0, 1)
-    elif is_scam or final_label == "SCAM-RISK":
-        risk_level = "DANGEROUS" if raw_risk in ["CRITICAL", "HIGH", "DANGEROUS"] else "SUSPICIOUS"
-        risk_score = round(confidence * 100.0, 1)
-        if risk_score < 70.0 and risk_level == "DANGEROUS":
-            risk_score = 88.5
-    else:
-        risk_level = "SAFE"
-        risk_score = round((1.0 - confidence) * 15.0, 1)
+    risk_level = normalize_verdict(final_label)
+    is_scam = risk_level == "SCAM_RISK"
+    risk_score = None if risk_level == "UNKNOWN" else round(
+        (confidence if is_scam else 1.0 - confidence) * 100.0, 1)
 
     # Format Council Breakdown if Tier 2 executed
     council_breakdown = None
@@ -271,7 +260,7 @@ def scan_message(req: ScanRequest):
         agents_list = []
         for v in votes_list:
             v_vote = str(v.get("vote", "")).upper()
-            verdict = "DANGEROUS" if "SCAM" in v_vote else "SAFE"
+            verdict = normalize_verdict(v_vote)
             agents_list.append(
                 AgentFinding(
                     role=v.get("display_name", v.get("role_id", "Specialist")),
@@ -299,7 +288,7 @@ def scan_message(req: ScanRequest):
         risk_score=risk_score,
         scam_category=raw_res.get("scam_type", "Chưa phân loại"),
         confidence=round(confidence, 4),
-        summary=raw_res.get("explanation", "Kết quả phân tích từ AI Engine"),
+        summary=(raw_res.get("explanation") or "").strip() or "Chưa đủ bằng chứng để kết luận. Hãy xác minh qua kênh chính thức.",
     )
 
     radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res)
@@ -325,7 +314,7 @@ def scan_message(req: ScanRequest):
     )
 
     try:
-        verdict_str = "UNKNOWN" if raw_res.get("final_label") in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"} else "SCAM_RISK" if is_scam else "LOW_RISK"
+        verdict_str = risk_level
         save_scan(
             content=req.content,
             input_type=req.check_type,
@@ -333,7 +322,7 @@ def scan_message(req: ScanRequest):
             raw_result=raw_res,
             verdict=verdict_str,
             confidence=confidence,
-            explanation=raw_res.get("explanation", "Kết quả phân tích từ AI Engine"),
+            explanation=verdict.summary,
             guidance="\n".join(recommendations),
         )
     except Exception as e:

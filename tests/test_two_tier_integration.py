@@ -125,7 +125,7 @@ def test_api_scan_endpoint_schema_contract(client):
     assert "verdict" in data
     assert "radar_metrics" in data
     assert "telemetry" in data
-    assert data["verdict"]["risk_level"] in ["SAFE", "SUSPICIOUS", "DANGEROUS", "UNKNOWN"]
+    assert data["verdict"]["risk_level"] in ["SCAM_RISK", "LOW_RISK", "UNKNOWN"]
 
 
 def test_scan_requires_content_and_does_not_document_message(client):
