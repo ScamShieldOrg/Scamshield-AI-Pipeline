@@ -19,7 +19,9 @@ onnx>=1.16,<2
 
 # HTTP & Remote Dynamic LLM Discovery
 requests>=2.31.0
+protobuf>=4.25,<7
 pyyaml>=6.0.1
+beautifulsoup4>=4.12,<5
 
 # Testing & Quality
 pytest>=8.0.0

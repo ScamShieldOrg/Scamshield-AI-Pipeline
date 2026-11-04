@@ -26,6 +26,7 @@ import time
 import json
 import logging
 import asyncio
+import re
 from typing import Dict, List, Optional, Any, Tuple
 import yaml
 import requests
@@ -45,6 +46,20 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+
+
+def filter_cited_chunk_ids(values: Any, rag_evidence: str) -> list[int]:
+    """Accept only chunk IDs actually supplied to the model."""
+    allowed_ids = {int(value) for value in re.findall(r"\[chunk_id:(\d+)\]", rag_evidence)}
+    cited_ids = []
+    for value in values if isinstance(values, list) else []:
+        try:
+            chunk_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if chunk_id in allowed_ids and chunk_id not in cited_ids:
+            cited_ids.append(chunk_id)
+    return cited_ids
 
 
 class CircuitBreaker:
@@ -262,6 +277,10 @@ class ForensicCouncil:
         user_prompt = f"""Phân tích tin nhắn tiếng Việt sau đây dưới góc nhìn chuyên môn của bạn:
 
 \"\"\"{message}\"\"\"
+
+Bằng chứng URL: {url_context}
+
+{rag_evidence}
 
 Bắt buộc trả về định dạng JSON thuần túy theo schema sau:
 {{

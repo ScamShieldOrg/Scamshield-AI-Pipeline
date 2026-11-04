@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 
 import psycopg
 from psycopg.types.json import Json
+from .url_signals import council_evidence
 
 
 def _now() -> datetime:
@@ -23,9 +24,9 @@ def _masked(text: str) -> str:
 
 
 def _result(label: Optional[str]) -> str:
-    if label in {"SCAM", "SCAM_RISK", "DANGEROUS"}:
+    if label in {"SCAM", "SCAM_RISK", "SCAM-RISK", "DANGEROUS"}:
         return "SCAM_RISK"
-    if label in {"HAM", "LOW_RISK", "SAFE"}:
+    if label in {"HAM", "LOW_RISK", "LOW-RISK", "SAFE"}:
         return "LOW_RISK"
     return "UNKNOWN"
 
@@ -77,8 +78,9 @@ def save_scan(
     t1_label = tier1.get("label")
     final_label = raw_result.get("final_label")
     llm_executed = tier2.get("status") == "EXECUTED"
-    stage = "LLM" if llm_executed else "VISOBERT"
-    stage_model_name = raw_result.get("model_name") if llm_executed else "ScamShield-ViSoBERT"
+    url_only = input_type == "URL"
+    stage = "LLM" if llm_executed else "URL_REPUTATION" if url_only else "VISOBERT"
+    stage_model_name = raw_result.get("model_name") if llm_executed else "ScamShield-URL-Reputation" if url_only else "ScamShield-ViSoBERT"
     stage_version = str(tier1.get("model_version", "1"))
 
     with psycopg.connect(database_url, connect_timeout=5) as connection:
@@ -106,36 +108,49 @@ def save_scan(
                 job_values,
             )
             job_id = cursor.fetchone()[0]
+            cursor.execute("""DELETE FROM inference_retrieved_chunks
+                              WHERE inference_id IN (SELECT id FROM ai_inferences WHERE ai_job_id = %s)""", (job_id,))
             cursor.execute("DELETE FROM ai_inferences WHERE ai_job_id = %s", (job_id,))
 
-            visobert_id = _model_id(cursor, "ScamShield-ViSoBERT", "VISOBERT_CLASSIFIER", stage_version, "local")
-            low = float(tier1.get("threshold_low", 0.35))
-            high = float(tier1.get("threshold_high", 0.85))
-            temperature = float(tier1.get("temperature", 1.0))
-            cursor.execute(
-                """INSERT INTO classifier_configs
-                   (model_id, low_threshold, high_threshold, temperature, configuration_version,
-                    is_active, created_at, updated_at)
-                   VALUES (%s, %s, %s, %s, 1, true, %s, %s)
-                   ON CONFLICT (model_id, configuration_version) DO UPDATE SET
-                    low_threshold = EXCLUDED.low_threshold, high_threshold = EXCLUDED.high_threshold,
-                    temperature = EXCLUDED.temperature, updated_at = EXCLUDED.updated_at
-                   RETURNING id""",
-                (visobert_id, low, high, temperature, now, now),
-            )
-            config_id = cursor.fetchone()[0]
-            cursor.execute(
-                """INSERT INTO ai_inferences
-                   (ai_job_id, stage, model_id, classifier_config_id, result, confidence,
-                    escalation_reason, explanation, attempt_no, latency_ms, api_cost, created_at)
-                   VALUES (%s, 'VISOBERT', %s, %s, %s, %s, %s, %s, 1, %s, 0, %s)""",
-                (
-                    job_id, visobert_id, config_id, _result(t1_label),
-                    float(tier1.get("scam_prob", confidence)),
-                    "LOW_CONFIDENCE" if llm_executed else None,
-                    tier1.get("reason"), int(float(tier1.get("latency_ms", 0))), now,
-                ),
-            )
+            if url_only:
+                reputation_id = _model_id(cursor, "ScamShield-URL-Reputation", "URL_REPUTATION", "1", "PhishTank+SafeBrowsing")
+                cursor.execute(
+                    """INSERT INTO ai_inferences
+                       (ai_job_id, stage, model_id, result, confidence, explanation, raw_response,
+                        attempt_no, latency_ms, api_cost, created_at)
+                       VALUES (%s, 'URL_REPUTATION', %s, %s, %s, %s, %s, 1, %s, 0, %s)""",
+                    (job_id, reputation_id, _result(final_label), confidence, explanation,
+                     Json(council_evidence([tier1.get("url_evidence", {})])), int(float(tier1.get("latency_ms", 0))), now),
+                )
+            else:
+                visobert_id = _model_id(cursor, "ScamShield-ViSoBERT", "VISOBERT_CLASSIFIER", stage_version, "local")
+                low = float(tier1.get("threshold_low", 0.35))
+                high = float(tier1.get("threshold_high", 0.85))
+                temperature = float(tier1.get("temperature", 1.0))
+                cursor.execute(
+                    """INSERT INTO classifier_configs
+                       (model_id, low_threshold, high_threshold, temperature, configuration_version,
+                        is_active, created_at, updated_at)
+                       VALUES (%s, %s, %s, %s, 1, true, %s, %s)
+                       ON CONFLICT (model_id, configuration_version) DO UPDATE SET
+                        low_threshold = EXCLUDED.low_threshold, high_threshold = EXCLUDED.high_threshold,
+                        temperature = EXCLUDED.temperature, updated_at = EXCLUDED.updated_at
+                       RETURNING id""",
+                    (visobert_id, low, high, temperature, now, now),
+                )
+                config_id = cursor.fetchone()[0]
+                cursor.execute(
+                    """INSERT INTO ai_inferences
+                       (ai_job_id, stage, model_id, classifier_config_id, result, confidence,
+                        escalation_reason, explanation, attempt_no, latency_ms, api_cost, created_at)
+                       VALUES (%s, 'VISOBERT', %s, %s, %s, %s, %s, %s, 1, %s, 0, %s)""",
+                    (
+                        job_id, visobert_id, config_id, _result(t1_label),
+                        float(tier1.get("scam_prob", confidence)),
+                        "LOW_CONFIDENCE" if llm_executed else None,
+                        tier1.get("reason"), int(float(tier1.get("latency_ms", 0))), now,
+                    ),
+                )
 
             if llm_executed:
                 llm_id = _model_id(cursor, str(stage_model_name or "ScamShield-LLM"), "LLM", "1.1", "cloud")
@@ -143,13 +158,25 @@ def save_scan(
                     """INSERT INTO ai_inferences
                        (ai_job_id, stage, model_id, result, confidence, explanation, raw_response,
                         attempt_no, latency_ms, api_cost, fallback_used, created_at)
-                       VALUES (%s, 'LLM', %s, %s, %s, %s, %s, 1, %s, %s, true, %s)""",
+                       VALUES (%s, 'LLM', %s, %s, %s, %s, %s, 1, %s, %s, true, %s)
+                       RETURNING id""",
                     (
                         job_id, llm_id, _result(final_label), confidence, explanation,
                         Json({key: value for key, value in tier2.items() if key != "rendered_prompt"}),
                         int(float(tier2.get("latency_ms", 0))), float(tier2.get("cost_usd", 0)), now,
                     ),
                 )
+                inference_id = cursor.fetchone()[0]
+                rag = tier2.get("rag") or {}
+                if rag.get("status") == "USED":
+                    for rank, source in enumerate(rag.get("sources", []), start=1):
+                        cursor.execute(
+                            """INSERT INTO inference_retrieved_chunks
+                               (inference_id, chunk_id, retrieval_rank, similarity_score,
+                                retrieval_method, used_in_prompt, retrieved_at)
+                               VALUES (%s,%s,%s,%s,'BGE_M3_DENSE_COSINE',true,%s)""",
+                            (inference_id, source["chunk_id"], rank, source["similarity"], now),
+                        )
 
 
 def save_prediction(*, message: str, core_check_id: Optional[int], result: Dict[str, Any]) -> None:
@@ -157,7 +184,7 @@ def save_prediction(*, message: str, core_check_id: Optional[int], result: Dict[
     decision = result["decision"]
     save_scan(
         content=message,
-        input_type="MESSAGE",
+        input_type="SMS",
         core_check_id=core_check_id,
         raw_result={
             "final_label": decision,

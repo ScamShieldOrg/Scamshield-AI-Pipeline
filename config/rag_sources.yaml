@@ -1,0 +1,16 @@
+allowed_hosts:
+  - bocongan.gov.vn
+  - www.bocongan.gov.vn
+seeds:
+  - title: "Cảnh báo các kịch bản lừa đảo trên không gian mạng"
+    key: general
+    url: "https://bocongan.gov.vn/bai-viet/nang-cao-canh-giac-truoc-25-kich-ban-lua-dao-tren-khong-gian-mang-nam-2026-1788865614"
+  - title: "Cảnh báo tin nhắn phạt nguội giả mạo"
+    key: fine
+    url: "https://bocongan.gov.vn/bai-viet/canh-bao-thu-doan-gia-danh-co-quan-cong-an-gui-tin-nhan-phat-nguoi-kem-duong-link-gia-mao-de-lua-dao-chiem-doat-tai-san-1788945012"
+  - title: "Cảnh báo ứng dụng VNeID giả mạo"
+    key: vneid
+    url: "https://bocongan.gov.vn/bai-viet/canh-bao-thu-doan-lua-dao-cai-ung-dung-vneid-gia-mao-d22-t45880"
+  - title: "Cảnh báo lừa đảo khi mua hàng trực tuyến"
+    key: shopping
+    url: "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304"

@@ -45,6 +45,7 @@ htmlcov/
 
 # Temporary downloaded datasets
 data/raw/vietnamese_sms_full.csv
+data/phishtank_online_valid.csv.gz
 
 # Local databases
 *.db

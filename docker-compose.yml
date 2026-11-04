@@ -25,6 +25,9 @@ services:
     container_name: scamshield-ai-engine
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - bge-m3-model-cache:/app/model-cache
     env_file:
       - path: .env
         required: false
@@ -33,6 +36,8 @@ services:
       HOST: 0.0.0.0
       TIER1_CONFIDENCE_THRESHOLD: ${TIER1_CONFIDENCE_THRESHOLD:-0.90}
       USE_COUNCIL: ${USE_COUNCIL:-true}
+      RAG_ENABLED: ${RAG_ENABLED:-true}
+      HF_HOME: /app/model-cache
       DATABASE_URL: postgresql://${POSTGRES_USER:-scamshield}:${POSTGRES_PASSWORD:-scamshield}@postgres:5432/${POSTGRES_DB:-scamshield_ai}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
@@ -42,6 +47,8 @@ services:
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       QWEN_API_KEY: ${QWEN_API_KEY:-}
       VIBI_BASE_URL: ${VIBI_BASE_URL:-https://vibi.top/v1}
+      SAFE_BROWSING_API_KEY: ${SAFE_BROWSING_API_KEY:-}
+      PHISHTANK_FEED_PATH: /app/data/phishtank_online_valid.csv.gz
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,7 +57,9 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
+      start_period: 300s
       retries: 3
 
 volumes:
   scamshield-ai-postgres-data:
+  bge-m3-model-cache:

@@ -14,6 +14,7 @@ import sys
 import time
 import uuid
 import logging
+import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
@@ -29,8 +30,12 @@ if ROOT_DIR not in sys.path:
 load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 from pipeline.two_tier_router import TwoTierRouter
+from pipeline.verdict_contract import normalize_verdict
 from api.visobert_app import router as visobert_router
 from pipeline.persistence import check_database, save_scan
+from pipeline.rag import BgeM3Embedder, RagRetriever, apply_rag_migration
+from pipeline.rag_ingestion import RagIngestor
+from scripts.update_phishtank import feed_path, main as download_phishtank_feed
 from api.schemas import (
     ScanRequest,
     StandardScanResponse,
@@ -70,20 +75,65 @@ app.add_middleware(
 )
 
 router_instance: TwoTierRouter = None
+_phishtank_bootstrap_started = False
+
+
+def _download_missing_phishtank_feed():
+    """Report the outcome of the one-time background download in API logs."""
+    if download_phishtank_feed() == 0:
+        logger.info("PhishTank download completed; Tier 1 will use feed: %s", feed_path())
+    else:
+        logger.warning("PhishTank download failed; Tier 1 will report this source as unavailable until a feed exists. The next API startup will retry.")
 
 
 @app.on_event("startup")
 def startup_event():
-    global router_instance
+    global router_instance, _phishtank_bootstrap_started
+
+    if router_instance is not None:
+        return
     logger.info("Initializing ScamShield TwoTierRouter...")
     try:
+        rag_retriever = None
+        if not hasattr(app.state, "rag_embedder"):
+            app.state.rag_embedder = None
+        if not hasattr(app.state, "rag_ingestor"):
+            app.state.rag_ingestor = None
+        if os.getenv("RAG_ENABLED", "true").lower() == "true":
+            try:
+                apply_rag_migration()
+                if app.state.rag_embedder is None:
+                    app.state.rag_embedder = BgeM3Embedder()
+                rag_retriever = RagRetriever(app.state.rag_embedder)
+                if app.state.rag_ingestor is None:
+                    app.state.rag_ingestor = RagIngestor(app.state.rag_embedder)
+                    app.state.rag_ingestor.start_daily_refresh()
+                logger.info("RAG BGE-M3 loaded once; ingestion and inference share the instance.")
+            except Exception as rag_error:
+                logger.warning("RAG unavailable at startup: %s", type(rag_error).__name__)
         router_instance = TwoTierRouter(
             confidence_threshold=float(os.getenv("TIER1_CONFIDENCE_THRESHOLD", "0.90")),
             api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
             config_path=os.path.join(ROOT_DIR, "config", "gemini_models.yaml"),
             council_config_path=os.path.join(ROOT_DIR, "config", "council_registry.yaml"),
             use_council=os.getenv("USE_COUNCIL", "true").lower() == "true",
+            rag_retriever=rag_retriever,
         )
+        safe_browsing_key = router_instance.url_signals.safe_browsing.api_key
+        if safe_browsing_key and not safe_browsing_key.lower().startswith("your_"):
+            logger.info("Safe Browsing configured; API key will be verified on the first URL lookup.")
+        else:
+            logger.warning("Safe Browsing unavailable: SAFE_BROWSING_API_KEY is missing or a placeholder.")
+
+        path = feed_path()
+        if path.is_file():
+            logger.info("PhishTank feed file found: %s (%d bytes); Tier 1 will use this snapshot.", path, path.stat().st_size)
+        elif os.getenv("PHISHTANK_AUTO_DOWNLOAD", "true").lower() == "true" and not _phishtank_bootstrap_started:
+            _phishtank_bootstrap_started = True
+            logger.info("PhishTank feed missing at %s; starting one-time background download.", path)
+            threading.Thread(target=_download_missing_phishtank_feed, name="phishtank-bootstrap", daemon=True).start()
+        elif not _phishtank_bootstrap_started:
+            logger.warning("PhishTank feed missing at %s; automatic download is disabled.", path)
         logger.info("ScamShield TwoTierRouter successfully initialized and ready for requests.")
     except Exception as e:
         logger.error(f"Failed to initialize TwoTierRouter: {e}", exc_info=True)
@@ -144,13 +194,18 @@ def _compute_radar_metrics(message: str, is_scam: bool, raw_res: Dict[str, Any])
 
 def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
     """Provides actionable advice conforming to UI contract."""
-    if is_scam or risk_level in ["DANGEROUS", "HIGH", "CRITICAL"]:
+    if risk_level == "SCAM_RISK":
         return [
             "Khuyến nghị chưa vội chuyển tiền và không nhấp vào liên kết trong tin nhắn.",
             "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
             "Nên gọi điện thoại trực tiếp vào số chính thức đã biết của đối phương để xác minh.",
         ]
-    elif risk_level in ["SUSPICIOUS", "MEDIUM", "UNKNOWN"]:
+    elif risk_level == "UNKNOWN":
+        return [
+            "Chưa đủ bằng chứng để kết luận; kiểm tra lại qua kênh chính thức hoặc nguồn độc lập.",
+            "Không cung cấp OTP, mật khẩu hoặc thông tin tài chính khi chưa xác minh.",
+        ]
+    elif risk_level in ["SUSPICIOUS", "MEDIUM"]:
         return [
             "Tin nhắn có dấu hiệu bất thường, cần kiểm tra lại qua kênh liên hệ chính thống.",
             "Xác minh danh tính người gửi qua số điện thoại tổng đài chính thức của đơn vị liên quan.",
@@ -165,8 +220,7 @@ def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
 def scan_message(req: ScanRequest):
     """
     Main Scan Endpoint conforming to ScamShield Contract (docs/04_API_CONTRACTS_AND_SCHEMAS.md).
-    Tier 1 runs the trained ViSoBERT model using its saved calibration and
-    decision thresholds. REVIEW-band messages escalate to Tier 2 3-Agent Council.
+    SMS uses ViSoBERT plus URL signals; standalone URL uses URL signals only.
     """
     global router_instance
     if not router_instance:
@@ -177,10 +231,10 @@ def scan_message(req: ScanRequest):
             detail="AI Pipeline Engine is still initializing. Please retry shortly.",
         )
 
-    content_to_scan = req.content or req.message or ""
+    content_to_scan = req.content
 
     try:
-        raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2)
+        raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
     except Exception as e:
         logger.error(f"Inference error during scan: {e}", exc_info=True)
         return StandardScanResponse(
@@ -192,19 +246,10 @@ def scan_message(req: ScanRequest):
     confidence = float(raw_res.get("final_confidence", 0.0))
     tier_executed = 2 if raw_res.get("escalated", False) else 1
     final_label = raw_res.get("final_label", "")
-    raw_risk = raw_res.get("risk_level", "LOW").upper()
-
-    if final_label in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"}:
-        risk_level = "SUSPICIOUS"
-        risk_score = round(float(raw_res.get("tier1_telemetry", {}).get("scam_prob", 0.5)) * 100.0, 1)
-    elif is_scam or final_label == "SCAM-RISK":
-        risk_level = "DANGEROUS" if raw_risk in ["CRITICAL", "HIGH", "DANGEROUS"] else "SUSPICIOUS"
-        risk_score = round(confidence * 100.0, 1)
-        if risk_score < 70.0 and risk_level == "DANGEROUS":
-            risk_score = 88.5
-    else:
-        risk_level = "SAFE"
-        risk_score = round((1.0 - confidence) * 15.0, 1)
+    risk_level = normalize_verdict(final_label)
+    is_scam = risk_level == "SCAM_RISK"
+    risk_score = None if risk_level == "UNKNOWN" else round(
+        (confidence if is_scam else 1.0 - confidence) * 100.0, 1)
 
     # Format Council Breakdown if Tier 2 executed
     council_breakdown = None
@@ -215,7 +260,7 @@ def scan_message(req: ScanRequest):
         agents_list = []
         for v in votes_list:
             v_vote = str(v.get("vote", "")).upper()
-            verdict = "DANGEROUS" if "SCAM" in v_vote else "SAFE"
+            verdict = normalize_verdict(v_vote)
             agents_list.append(
                 AgentFinding(
                     role=v.get("display_name", v.get("role_id", "Specialist")),
@@ -243,7 +288,7 @@ def scan_message(req: ScanRequest):
         risk_score=risk_score,
         scam_category=raw_res.get("scam_type", "Chưa phân loại"),
         confidence=round(confidence, 4),
-        summary=raw_res.get("explanation", "Kết quả phân tích từ AI Engine"),
+        summary=(raw_res.get("explanation") or "").strip() or "Chưa đủ bằng chứng để kết luận. Hãy xác minh qua kênh chính thức.",
     )
 
     radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res)
@@ -269,19 +314,15 @@ def scan_message(req: ScanRequest):
     )
 
     try:
-        verdict_str = "UNKNOWN" if raw_res.get("final_label") in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"} else "SCAM_RISK" if is_scam else "LOW_RISK"
+        verdict_str = risk_level
         save_scan(
             content=req.content,
-            input_type=(
-                req.check_type
-                if req.check_type in {"URL", "PHONE", "BANK_ACCOUNT"}
-                else "MESSAGE"
-            ),
+            input_type=req.check_type,
             core_check_id=req.core_check_id,
             raw_result=raw_res,
             verdict=verdict_str,
             confidence=confidence,
-            explanation=raw_res.get("explanation", "Kết quả phân tích từ AI Engine"),
+            explanation=verdict.summary,
             guidance="\n".join(recommendations),
         )
     except Exception as e:
@@ -303,7 +344,7 @@ def scan_message_raw(req: ScanRequest):
     """Debug endpoint returning exact internal router output dictionary."""
     if not router_instance:
         raise HTTPException(status_code=503, detail="AI Engine not initialized")
-    return router_instance.classify(req.content, force_tier2=req.force_tier2)
+    return router_instance.classify(req.content, force_tier2=req.force_tier2, check_type=req.check_type)
 
 
 if __name__ == "__main__":
