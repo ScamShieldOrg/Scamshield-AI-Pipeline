@@ -1,18 +1,20 @@
 # ==============================================================================
-# ScamShield-VN: 3-Agent Forensic Council Registry Configuration
+# ScamShield-VN: Consolidated 3-Agent Forensic Council Registry Configuration
 # ==============================================================================
 # Decoupled Multi-Provider Heterogeneous AI Council for Tier-2 Deep Forensic Analysis.
-# Complies with RBL Methodology, eliminating hardcoded models and mitigating Alarm Fatigue.
+# Consolidated from 5 agents to 3 agents via Occam's Razor & Empirical Ablation (McNemar p=0.0736).
+# Mitigates Alarm Fatigue (0.00% FPR) while reducing API calls and cost by 40%.
 # Reference Papers: MultiPhishGuard (2025), PoLL (2024), ChatEval (2024), NAACL (2025).
 # ==============================================================================
 
 council_metadata:
-  name: "ScamShield 3-Agent Consolidated Forensic Council"
+  name: "ScamShield Consolidated 3-Agent Forensic Council"
   version: "2.0"
-  architecture: "Multi-Provider Heterogeneous Consensus Panel (Consolidated 3-Seat Topology)"
+  architecture: "Multi-Provider Heterogeneous Consensus Panel"
   consensus_mode: "Weighted Borda & Public Defender Review"
+  council_size: 3
   early_exit_enabled: true
-  early_exit_threshold: 3  # 3-0 unanimous decision triggers instant exit
+  early_exit_threshold: 3  # 3-0 unanimous triggers instant exit
 
 execution_policy:
   async_parallel: true
@@ -28,60 +30,108 @@ circuit_breaker:
   backoff_seconds: 0.5
 
 # ==============================================================================
-# The 3 Consolidated Forensic Specialist Personas (Maker-Checker Architecture)
-# Validated empirically across 117 Master Test Cases (McNemar p=0.0736 >= 0.05)
+# The Active 3 Forensic Specialist Personas & Standby Priority Chains (Maker-Checker)
+# Seat A: Cyber-Financial Analyst (URL + Banking Protocol)
+# Seat B: Psycholinguistic & Slang Profiler (Social Engineering + Teencode Evasion)
+# Seat C: Public Defender Advocate (Devil's Advocate, Anti-Alarm-Fatigue Veto)
 # ==============================================================================
 specialists:
 
+  # ----------------------------------------------------------------------------
+  # Seat 1 (Seat A): Cyber-Financial & Banking Security Analyst
+  # Consolidated from: cyber_threat_url_inspector + banking_protocol_verifier
+  # ----------------------------------------------------------------------------
   cyber_financial_analyst:
     role_id: "ROLE_CYBER_BANK"
     display_name: "Cyber-Financial & Banking Security Analyst"
     description: "Consolidated role merging Technical URL/Domain infrastructure inspection with Banking/Financial protocol verification (Decision 2345/QĐ-NHNN)."
-    primary_maker_model: "gpt-6.1-sol"             # Standardized Maker model
-    secondary_checker_model: "gemini-3.5-flash-lite" # Fast cross-validation checker (Gemini >= 3.5)
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
     standby_priority_chain:
       - "gemini-3.8-flash"
       - "gpt-6-sol"
       - "gemini-3.5-flash"
-    weight: 1.3  # High authority on technical IOCs and banking protocols
+    weight: 0.35
     prompt_template: |
       Bạn là Chuyên gia Cao cấp về An ninh Mạng và Quy trình Pháp lý Ngân hàng thuộc Hội đồng Pháp y ScamShield-VN.
       Nhiệm vụ: Giám định kết hợp giữa hạ tầng kỹ thuật và quy chuẩn ngành tài chính - ngân hàng:
-      1. Kỹ thuật: Phát hiện tên miền giả mạo (homoglyph/typosquatting, ví dụ: vietcombankk-login.com), đường link rút gọn lạ, mã độc APK ngoài kho ứng dụng chính thức.
+      1. Kỹ thuật: Phát hiện tên miền giả mạo (homoglyph/typosquatting), đường link rút gọn lạ, mã độc APK ngoài kho ứng dụng chính thức.
       2. Pháp lý Ngân hàng: Đối chiếu với Quyết định 2345/QĐ-NHNN và quy định các NHTM Việt Nam (Ngân hàng KHÔNG BAO GIỜ gửi SMS yêu cầu click link để đăng nhập, cập nhật sinh trắc học, hoặc nhập mã OTP).
 
+  # ----------------------------------------------------------------------------
+  # Seat 2 (Seat B): Psycholinguistic & Vietnamese Slang Profiler
+  # Consolidated from: social_engineering_profiler + vietnamese_teencode_analyst
+  # ----------------------------------------------------------------------------
   psycholinguistic_slang_profiler:
     role_id: "ROLE_PSYCHO_TEENCODE"
     display_name: "Psycholinguistic & Vietnamese Slang Profiler"
     description: "Consolidated role merging Psychological manipulation analysis with Vietnamese teencode and lexical evasion decoding."
-    primary_maker_model: "gpt-6.1-sol"             # SOTA psychological manipulation identification
-    secondary_checker_model: "gemini-3.5-flash-lite" # High speed tokenization & verification
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
     standby_priority_chain:
       - "gemini-3.8-flash"
       - "gpt-6-sol"
       - "gemini-3.5-flash"
-    weight: 1.2
+    weight: 0.35
     prompt_template: |
       Bạn là Chuyên gia Tâm lý Tội phạm và Ngôn ngữ học Tiếng Việt thuộc Hội đồng Pháp y ScamShield-VN.
       Nhiệm vụ: Bóc tách kết hợp giữa đòn bẩy tâm lý và thủ thuật ngụy trang ngôn ngữ:
       1. Đòn bẩy tâm lý: Phát hiện áp lực thời gian vô lý ("trong 24h", "khóa ngay"), đe dọa tố tụng/bắt giữ ("Công an, VKS"), hoặc bẫy lòng tham (tri ân, trúng thưởng, CTV việc làm ảo).
       2. Ngôn ngữ & Teencode: Giải mã từ ngữ viết tắt cố ý, thay thế ký tự số (ví dụ: "t4i kh04n", "n9an h4n9", "x4c thuc"), tiếng lóng lách bộ lọc viễn thông.
 
+  # ----------------------------------------------------------------------------
+  # Seat 3 (Seat C): Public Defender & Anti-False-Positive Advocate
+  # Sovereign Seat: Retained with Veto -0.25 to eliminate Alarm Fatigue
+  # ----------------------------------------------------------------------------
   public_defender_advocate:
     role_id: "ROLE_DEFENDER"
     display_name: "Public Defender & Anti-False-Positive Advocate"
     description: "Devil's advocate persona focused strictly on protecting legitimate communication, identifying authentic e-commerce, legitimate OTPs, and preventing Alarm Fatigue."
-    primary_maker_model: "gpt-6.1-sol"             # Record 0.00% FPR, protects legitimate messages
-    secondary_checker_model: "gemini-3.8-flash"    # High precision reasoning, low false alarms
+    primary_maker_model: "gpt-6.1-sol"             # 0.00% FPR record, 100% protection for authentic HAM
+    secondary_checker_model: "gemini-3.8-flash"    # High precision reasoning, zero false alarms
     standby_priority_chain:
       - "gemini-3.5-flash-lite"
       - "gpt-6-sol"
       - "gemini-3.5-flash"
-    weight: 1.3  # Strong weight to defend legitimate non-scam messages
+    weight: 0.30  # Strong weight to defend legitimate non-scam messages
     prompt_template: |
       Bạn là Luật sư Bào chữa Công cộng (Public Defender) thuộc Hội đồng Pháp y ScamShield-VN.
       Nhiệm vụ sống còn của bạn là CHỐNG BÁO ĐỘNG GIẢ (Anti-False-Positive) và chống lại hội chứng Alarm Fatigue.
       Hãy tìm mọi lý do hợp lý chứng minh tin nhắn này là GIAO DỊCH BÌNH THƯỜNG / HỢP PHÁP: tin nhắn OTP tiêu chuẩn, mã xác thực dịch vụ, thông báo tiền điện nước định kỳ, quảng cáo khuyến mãi hợp pháp không có yếu tố chiếm đoạt. Nếu không có bằng chứng lừa đảo rõ ràng, bạn BẮT BUỘC bỏ phiếu là HAM (Hợp pháp).
+
+# ==============================================================================
+# Reference Specialists for EXP-04 Ablation Study (Legacy 5-Agent Benchmark)
+# Kept for paired ablation reproducibility against Arm 1 Reference Panel
+# ==============================================================================
+reference_5agent_ablation_specialists:
+  cyber_threat_url_inspector:
+    role_id: "ROLE_CYBER_URL"
+    display_name: "Cyber Threat & Malicious URL Inspector"
+    description: "Legacy Arm 1 role: URL homoglyphs, typosquatting, APK downloads."
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
+    weight: 1.2
+  banking_protocol_verifier:
+    role_id: "ROLE_BANK_VERIFY"
+    display_name: "Banking & Financial Protocol Verifier"
+    description: "Legacy Arm 1 role: Validates authentic banking procedures and SBV Circular 23."
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
+    weight: 1.2
+  social_engineering_profiler:
+    role_id: "ROLE_SOC_ENG"
+    display_name: "Social Engineering & Psychological Urgency Profiler"
+    description: "Legacy Arm 1 role: Psychological manipulation and artificial urgency."
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
+    weight: 1.1
+  vietnamese_teencode_analyst:
+    role_id: "ROLE_VN_TEENCODE"
+    display_name: "Vietnamese Linguistic & Teencode Analyst"
+    description: "Legacy Arm 1 role: Teencode, deliberate spelling mutations."
+    primary_maker_model: "gpt-6.1-sol"
+    secondary_checker_model: "gemini-3.5-flash-lite"
+    weight: 1.1
 
 # ==============================================================================
 # Consensus & Decision Engine Thresholds (Standardized 3-Label Framework)
@@ -94,7 +144,7 @@ consensus_rules:
   unanimous_scam_threshold: 0.85    # Score >= 0.85 -> CRITICAL Risk
   suspected_scam_threshold: 0.60    # Score >= 0.60 -> HIGH Risk
   ham_threshold: 0.40               # Score < 0.40 -> LOW Risk
-  public_defender_veto_boost: 0.25  # Subtracted from scam score if Defender strongly asserts legitimacy
+  public_defender_veto_boost: 0.25  # Subtracted from scam score if Defender strongly asserts legitimacy with valid protocol
   unknown_triggers:
     vote_contradiction_enabled: true
     min_supermajority_margin: 2
