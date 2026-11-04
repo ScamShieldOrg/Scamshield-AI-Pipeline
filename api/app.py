@@ -196,9 +196,9 @@ def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
     """Provides actionable advice conforming to UI contract."""
     if risk_level == "SCAM_RISK":
         return [
-            "Tuyệt đối không nhấp vào bất kỳ đường link nào trong tin nhắn.",
+            "Khuyến nghị chưa vội chuyển tiền và không nhấp vào liên kết trong tin nhắn.",
             "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
-            "Thông báo cho người thân, chặn số liên lạc và gửi báo cáo lừa đảo lên hệ thống.",
+            "Nên gọi điện thoại trực tiếp vào số chính thức đã biết của đối phương để xác minh.",
         ]
     elif risk_level == "UNKNOWN":
         return [
@@ -266,7 +266,7 @@ def scan_message(req: ScanRequest):
                     role=v.get("display_name", v.get("role_id", "Specialist")),
                     verdict=verdict,
                     score=round(float(v.get("scam_prob", v.get("scam_probability", 0.0))) * 100.0, 1),
-                    finding=v.get("analysis", v.get("rationale", "Phân tích chuyên sâu từ Hội đồng")),
+                    finding=v.get("analysis", v.get("rationale", "Phân tích chuyên sâu từ Chuyên gia AI")),
                 )
             )
 
