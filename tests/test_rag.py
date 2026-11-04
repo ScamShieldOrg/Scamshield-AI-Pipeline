@@ -114,6 +114,7 @@ def test_calibration_requires_precision_and_reports_no_match():
 
 def test_single_llm_fallback_uses_normalized_input():
     router = TwoTierRouter.__new__(TwoTierRouter)
+    router.tau = 0.90
     router.tier1_classifier = MagicMock()
     router.tier1_classifier.predict.return_value = {
         "label": "HAM", "class_id": 0, "confidence": 0.99, "calibrated_scam_prob": 0.01,

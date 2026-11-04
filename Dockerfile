@@ -25,6 +25,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY pipeline /app/pipeline
 COPY config /app/config
 COPY models /app/models
+# The scan router loads the release tokenizer and prefers these INT8 weights.
+COPY visobert_5runs_release/tokenizer.json visobert_5runs_release/tokenizer_config.json visobert_5runs_release/config.json visobert_5runs_release/visobert_tier1_int8.onnx /app/visobert_5runs_release/
+# Fail the build if assets are missing, LFS pointers, or incompatible with inference.
+RUN python -c "from pipeline.local_classifier import LocalViSoBERTClassifier; model = LocalViSoBERTClassifier(); assert model.has_onnx and model.tokenizer is not None, 'ViSoBERT ONNX model/tokenizer failed to load'; result = model.predict('Kiem tra ViSoBERT'); assert result['tier'] == 'Tier 1 (Local ViSoBERT ONNX INT8/CPU)', result"
 COPY api /app/api
 COPY scripts /app/scripts
 COPY db/migrations /app/db/migrations
