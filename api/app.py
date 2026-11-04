@@ -20,6 +20,7 @@ from typing import Dict, Any, List
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Ensure root directory is on PYTHONPATH
@@ -216,7 +217,8 @@ def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
     ]
 
 
-@app.post("/api/v1/scan", response_model=StandardScanResponse)
+@app.post("/api/v1/scan", response_model=StandardScanResponse,
+          responses={500: {"model": StandardScanResponse, "description": "Model inference failed"}})
 def scan_message(req: ScanRequest):
     """
     Main Scan Endpoint conforming to ScamShield Contract (docs/04_API_CONTRACTS_AND_SCHEMAS.md).
@@ -237,9 +239,12 @@ def scan_message(req: ScanRequest):
         raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
     except Exception as e:
         logger.error(f"Inference error during scan: {e}", exc_info=True)
-        return StandardScanResponse(
-            status="error",
-            error=f"Model inference failed: {str(e)}",
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=StandardScanResponse(
+                status="error",
+                error=f"Model inference failed: {str(e)}",
+            ).model_dump(mode="json"),
         )
 
     is_scam = raw_res.get("is_scam", False)
@@ -267,6 +272,7 @@ def scan_message(req: ScanRequest):
                     verdict=verdict,
                     score=round(float(v.get("scam_prob", v.get("scam_probability", 0.0))) * 100.0, 1),
                     finding=v.get("analysis", v.get("rationale", "Phân tích chuyên sâu từ Chuyên gia AI")),
+                    cited_chunk_ids=v.get("cited_chunk_ids", []),
                 )
             )
 
