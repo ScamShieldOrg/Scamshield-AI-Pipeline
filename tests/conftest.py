@@ -1,4 +1,6 @@
 import os
+import sys
+from pathlib import Path
 
 os.environ["PHISHTANK_AUTO_DOWNLOAD"] = "false"
 os.environ["RAG_ENABLED"] = "false"
@@ -9,6 +11,10 @@ os.environ["OPENAI_API_KEY"] = ""
 
 import pytest
 from unittest.mock import patch
+
+ROOT_DIR = str(Path(__file__).resolve().parents[1])
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 
 @pytest.fixture(autouse=True)
