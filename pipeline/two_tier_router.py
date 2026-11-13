@@ -18,7 +18,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from .model_registry import ModelRegistry
 from .local_classifier import LocalPhoBERTClassifier
-from .forensic_council import ForensicCouncil
+from .forensic_council import ForensicCouncil, filter_cited_chunk_ids
 from .url_signals import UrlSignals, council_evidence, extract_urls
 from .rag import RagRetriever, normalize_tier2_input, format_rag_evidence, MODEL_NAME, MODEL_REVISION
 from .prompt_logging import log_tier2_prompt
@@ -78,6 +78,8 @@ class TwoTierRouter:
         """
         self.tau = confidence_threshold
         self.use_council = use_council
+        self.url_signals = UrlSignals()
+        self.rag_retriever = rag_retriever
         self.tier1_classifier = LocalPhoBERTClassifier(
             temperature=tier1_temperature,
             cost_alpha=tier1_cost_alpha,
@@ -208,7 +210,17 @@ class TwoTierRouter:
         # Case B: Escalate to Tier 2 (Dynamic Cloud Fallback)
         # Reason: Ambiguous case (Confidence < tau) or forced audit
         # -------------------------------------------------------------
-        fallback_trigger = "FORCED_AUDIT" if force_tier2 else f"LOW_CONFIDENCE ({t1_confidence*100:.1f}% < {self.tau*100:.0f}%)"
+        fallback_trigger = ("FORCED_AUDIT" if force_tier2 else "URL_THREAT_CONFLICT" if url_conflict
+                            else f"LOW_CONFIDENCE ({t1_confidence*100:.1f}% < {self.tau*100:.0f}%)")
+        # Prepare one request-local context shared by retrieval and both cloud paths.
+        tier2_input = normalize_tier2_input(message)
+        rag_chunks = []
+        rag_meta = {"status": "UNAVAILABLE", "embedding_model": MODEL_NAME,
+                    "embedding_version": MODEL_REVISION, "sources": [], "cited_chunk_ids": []}
+        if self.rag_retriever is not None:
+            rag_chunks, rag_meta = self.rag_retriever.retrieve(tier2_input.message)
+            rag_meta = {**rag_meta, "cited_chunk_ids": []}
+        rag_prompt = format_rag_evidence(rag_chunks)
 
         # Check if Forensic Council is enabled
         if self.use_council and self.council:
@@ -218,7 +230,10 @@ class TwoTierRouter:
             )
             logger.info(f"Escalating message to Tier 2 Forensic Council. Reason: {fallback_trigger}")
             try:
-                council_res = self.council.evaluate_sync(message)
+                council_res = self.council.evaluate_sync(
+                    tier2_input.message, url_evidence=tier2_url_evidence, rag_evidence=rag_prompt,
+                )
+                rag_meta["cited_chunk_ids"] = filter_cited_chunk_ids(council_res.get("cited_chunk_ids"), rag_prompt)
                 total_elapsed_ms = (time.perf_counter() - start_overall) * 1000
                 c_label = council_res["final_label"]
                 return {
@@ -245,6 +260,7 @@ class TwoTierRouter:
                         "cost_usd": council_res["estimated_council_cost_usd"],
                         "fallback_trigger": fallback_trigger,
                         "specialist_votes": council_res["specialist_votes"],
+                        "rag": rag_meta,
                     },
                     "total_latency_ms": round(total_elapsed_ms, 2),
                     "total_cost_usd": council_res["estimated_council_cost_usd"],
@@ -304,7 +320,7 @@ class TwoTierRouter:
                     "final_label": final_label,
                     "final_confidence": round(final_conf, 4),
                     "is_scam": is_scam,
-                    "is_unknown": False,
+                    "is_unknown": final_label == "UNKNOWN",
                     "scam_type": scam_type,
                     "risk_level": risk_level,
                     "explanation": explanation,

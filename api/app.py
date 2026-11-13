@@ -21,6 +21,7 @@ from typing import Dict, Any, List
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Ensure root directory is on PYTHONPATH
@@ -247,7 +248,8 @@ def _build_recommendations(content_or_is_scam=None, is_scam=False, risk_level="L
     return recs
 
 
-@app.post("/api/v1/scan", response_model=StandardScanResponse)
+@app.post("/api/v1/scan", response_model=StandardScanResponse,
+          responses={500: {"model": StandardScanResponse, "description": "Model inference failed"}})
 def scan_message(req: ScanRequest):
     """
     Main Scan Endpoint conforming to ScamShield Contract (docs/04_API_CONTRACTS_AND_SCHEMAS.md).
@@ -377,6 +379,7 @@ def scan_message(req: ScanRequest):
                     verdict=verdict,
                     score=round(float(v.get("scam_prob", v.get("scam_probability", 0.0))) * 100.0, 1),
                     finding=v.get("analysis", v.get("rationale", "Phân tích chuyên sâu từ Chuyên gia AI")),
+                    cited_chunk_ids=v.get("cited_chunk_ids", []),
                 )
             )
 

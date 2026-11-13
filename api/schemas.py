@@ -33,6 +33,7 @@ class AgentFinding(BaseModel):
     verdict: Literal["SCAM_RISK", "LOW_RISK", "UNKNOWN"]
     score: float
     finding: str
+    cited_chunk_ids: List[int] = Field(default_factory=list)
 
 
 class CouncilBreakdown(BaseModel):
