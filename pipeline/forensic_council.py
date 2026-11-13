@@ -278,7 +278,8 @@ class ForensicCouncil:
         display_name = spec.get("display_name", role_key)
         weight = spec.get("weight", 1.0)
         system_prompt = spec.get("prompt_template", "")
-        url_context = json.dumps(url_evidence or [], ensure_ascii=False)
+        url_context = spec.get("url_context", "Không có bằng chứng URL độc hại")
+        rag_evidence = spec.get("rag_evidence", "")
 
         user_prompt = f"""Phân tích tin nhắn tiếng Việt sau đây dưới góc nhìn chuyên môn của bạn:
 

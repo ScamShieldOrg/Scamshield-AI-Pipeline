@@ -15,6 +15,7 @@ import time
 import uuid
 import logging
 import threading
+import re
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
@@ -32,6 +33,7 @@ load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 from pipeline.two_tier_router import TwoTierRouter
 from pipeline.verdict_contract import normalize_verdict
+from pipeline.tier2_cache import Tier2CacheManager
 from api.visobert_app import router as visobert_router
 from pipeline.persistence import check_database, save_scan
 from pipeline.rag import BgeM3Embedder, RagRetriever, apply_rag_migration
@@ -76,6 +78,7 @@ app.add_middleware(
 )
 
 router_instance: TwoTierRouter = None
+cache_manager = Tier2CacheManager()
 _phishtank_bootstrap_started = False
 
 
@@ -193,28 +196,56 @@ def _compute_radar_metrics(message: str, is_scam: bool, raw_res: Dict[str, Any])
     )
 
 
-def _build_recommendations(is_scam: bool, risk_level: str) -> List[str]:
-    """Provides actionable advice conforming to UI contract."""
-    if risk_level == "SCAM_RISK":
-        return [
-            "Khuyến nghị chưa vội chuyển tiền và không nhấp vào liên kết trong tin nhắn.",
-            "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
-            "Nên gọi điện thoại trực tiếp vào số chính thức đã biết của đối phương để xác minh.",
-        ]
-    elif risk_level == "UNKNOWN":
-        return [
-            "Chưa đủ bằng chứng để kết luận; kiểm tra lại qua kênh chính thức hoặc nguồn độc lập.",
-            "Không cung cấp OTP, mật khẩu hoặc thông tin tài chính khi chưa xác minh.",
-        ]
-    elif risk_level in ["SUSPICIOUS", "MEDIUM"]:
-        return [
-            "Tin nhắn có dấu hiệu bất thường, cần kiểm tra lại qua kênh liên hệ chính thống.",
-            "Xác minh danh tính người gửi qua số điện thoại tổng đài chính thức của đơn vị liên quan.",
-        ]
-    return [
-        "Tin nhắn không có dấu hiệu lừa đảo nguy hiểm.",
-        "Tiếp tục cảnh giác với các yêu cầu chuyển tiền bất thường phát sinh sau này.",
-    ]
+def _build_recommendations(content_or_is_scam=None, is_scam=False, risk_level="LOW_RISK") -> List[str]:
+    """
+    GĐ4: Cung cấp khuyến nghị an toàn dựa trên tín hiệu có trong nội dung và chuẩn hóa hợp đồng.
+    Hỗ trợ cả chữ ký _build_recommendations(content, is_scam, risk_level) lẫn _build_recommendations(is_scam, risk_level).
+    """
+    if isinstance(content_or_is_scam, bool):
+        is_scam = content_or_is_scam
+        content = ""
+    else:
+        content = str(content_or_is_scam or "")
+
+    recs = []
+    content_lower = content.lower()
+    
+    # 1. Khuyến nghị theo tín hiệu cụ thể trong tin nhắn (hỗ trợ cả có dấu và không dấu)
+    has_financial = any(w in content_lower for w in ["chuyển", "chuyen", "tiền", "tien", "nạp", "nap", "vnd", "mượn", "muon", "thanh toán", "thanh toan", "cước", "cuoc", "stk", "tài khoản", "tai khoan"])
+    has_link = bool(re.search(r"https?://[^\s]+", content_lower)) or any(w in content_lower for w in ["link", "truy cập", "truy cap", "nhấp", "nhap", "http", "www.", ".xyz", ".top", ".site"])
+    has_auth = any(w in content_lower for w in ["otp", "mật khẩu", "mat khau", "mã xác", "ma xac", "cccd", "sinh trắc", "sinh trac", "đăng nhập", "dang nhap"])
+
+    if has_financial:
+        recs.append("Có yêu cầu liên quan đến tài chính: Tuyệt đối không chuyển tiền. Hãy gọi điện xác minh trực tiếp qua số bạn đã biết từ trước.")
+    if has_link:
+        recs.append("Có liên kết đính kèm: Tuyệt đối không nhấp vào đường link lạ. Hãy chủ động truy cập ứng dụng hoặc website chính thức.")
+    if has_auth:
+        recs.append("Có yếu tố mã xác thực: Không cung cấp mã OTP, mật khẩu hay thông tin định danh cho bất kỳ ai qua tin nhắn.")
+
+    if not recs:
+        if risk_level == "SCAM_RISK":
+            recs = [
+                "Khuyến nghị chưa vội chuyển tiền và không nhấp vào liên kết trong tin nhắn.",
+                "Không cung cấp mật khẩu ngân hàng, mã OTP, số CCCD hoặc thông tin sinh trắc học.",
+                "Nên gọi điện thoại trực tiếp vào số chính thức đã biết của đối phương để xác minh.",
+            ]
+        elif risk_level == "UNKNOWN":
+            recs = [
+                "Chưa đủ bằng chứng để kết luận; kiểm tra lại qua kênh chính thức hoặc nguồn độc lập.",
+                "Không cung cấp OTP, mật khẩu hoặc thông tin tài chính khi chưa xác minh.",
+            ]
+        elif risk_level in ["SUSPICIOUS", "MEDIUM"]:
+            recs = [
+                "Tin nhắn có dấu hiệu bất thường, cần kiểm tra lại qua kênh liên hệ chính thống.",
+                "Xác minh danh tính người gửi qua số điện thoại tổng đài chính thức của đơn vị liên quan.",
+            ]
+        else:
+            recs = [
+                "Tin nhắn không có dấu hiệu lừa đảo nguy hiểm.",
+                "Tiếp tục cảnh giác với các yêu cầu chuyển tiền bất thường phát sinh sau này.",
+            ]
+
+    return recs
 
 
 @app.post("/api/v1/scan", response_model=StandardScanResponse,
@@ -235,17 +266,39 @@ def scan_message(req: ScanRequest):
 
     content_to_scan = req.content
 
-    try:
-        raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
-    except Exception as e:
-        logger.error(f"Inference error during scan: {e}", exc_info=True)
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=StandardScanResponse(
+    # GĐ5: Kiểm tra Cache Tier-2 trước khi gọi Cloud tốn kém
+    cached_hit = None
+    if not req.force_tier2:
+        try:
+            cached_hit = cache_manager.lookup(
+                input_type="URL" if req.check_type == "URL" else "MESSAGE",
+                content=content_to_scan,
+            )
+        except Exception as e:
+            logger.warning(f"Cache lookup failed: {e}")
+
+    if cached_hit:
+        raw_res = cached_hit
+    else:
+        try:
+            raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
+        except Exception as e:
+            logger.error(f"Inference error during scan: {e}", exc_info=True)
+            return StandardScanResponse(
                 status="error",
                 error=f"Model inference failed: {str(e)}",
-            ).model_dump(mode="json"),
-        )
+            )
+        
+        # GĐ5: Lưu kết quả Tier 2 thành công vào Cache
+        if raw_res.get("routing_path") in ("TIER_2_FORENSIC_COUNCIL", "TIER_2_CLOUD_FALLBACK"):
+            try:
+                cache_manager.store(
+                    input_type="URL" if req.check_type == "URL" else "MESSAGE",
+                    content=content_to_scan,
+                    raw_result=raw_res,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to store Tier-2 analysis in cache: {e}")
 
     is_scam = raw_res.get("is_scam", False)
     confidence = float(raw_res.get("final_confidence", 0.0))
@@ -253,8 +306,62 @@ def scan_message(req: ScanRequest):
     final_label = raw_res.get("final_label", "")
     risk_level = normalize_verdict(final_label)
     is_scam = risk_level == "SCAM_RISK"
-    risk_score = None if risk_level == "UNKNOWN" else round(
-        (confidence if is_scam else 1.0 - confidence) * 100.0, 1)
+    routing_path = raw_res.get("routing_path", "")
+    model_score = round(confidence * 100.0, 1)
+
+    if risk_level == "UNKNOWN":
+        risk_score = None
+    elif is_scam:
+        # GĐ1: Bỏ hoàn toàn nâng điểm giả 88.5; giữ nguyên điểm thật của mô hình
+        risk_score = model_score
+    else:
+        risk_score = round((1.0 - confidence) * 100.0, 1)
+
+    # GĐ1: Xác định analysis_status trung thực
+    if routing_path == "TIER_1_GRACEFUL_DEGRADATION":
+        analysis_status = "TIER2_FAILED"
+    elif final_label in {"REVIEW", "SUSPICIOUS_REVIEW", "UNKNOWN"}:
+        analysis_status = "INSUFFICIENT_EVIDENCE"
+    else:
+        analysis_status = "OK"
+
+    # GĐ1: Ràng buộc cảnh báo: Phân tích lỗi không bao giờ đi kèm warning_level = NONE
+    if analysis_status in {"MODEL_UNAVAILABLE", "TIER2_FAILED"}:
+        warning_level = "UNVERIFIED"
+    elif risk_level == "DANGEROUS":
+        warning_level = "HIGH"
+    elif risk_level == "SUSPICIOUS" or final_label == "UNKNOWN":
+        warning_level = "CAUTION"
+    else:
+        warning_level = "NONE"
+
+    # GĐ1: Xác định decided_by engine
+    if routing_path == "TIER_1_DIRECT_FASTPATH":
+        decided_by = "TIER1"
+    elif routing_path == "TIER_2_FORENSIC_COUNCIL":
+        decided_by = "COUNCIL"
+    elif routing_path == "TIER_2_CLOUD_FALLBACK":
+        decided_by = "CLOUD"
+    else:
+        decided_by = "TIER1"
+
+    # GĐ1: Trích xuất bằng chứng văn bản (evidence) có thật trong input
+    evidence = []
+    matched_cues = raw_res.get("tier1_telemetry", {}).get("matched_cues", [])
+    if isinstance(matched_cues, list):
+        for cue in matched_cues:
+            if isinstance(cue, str) and cue.lower() in content_to_scan.lower() and cue not in evidence:
+                evidence.append(cue)
+
+    # GĐ1: Phân loại nội dung riêng (content_class)
+    content_class = None
+    lower_content = content_to_scan.lower()
+    if final_label == "SCAM-RISK":
+        content_class = "SCAM_ATTEMPT"
+    elif any(kw in lower_content for kw in ["khuyen mai", "uu dai", "voucher", "giam gia", "tai app", "nohu", "game bai"]):
+        content_class = "UNTRUSTED_PROMOTION"
+    elif any(kw in lower_content for kw in ["ma xac minh", "otp", "mat khau"]):
+        content_class = "AUTH_CREDENTIAL" 
 
     # Format Council Breakdown if Tier 2 executed
     council_breakdown = None
@@ -295,10 +402,16 @@ def scan_message(req: ScanRequest):
         scam_category=raw_res.get("scam_type", "Chưa phân loại"),
         confidence=round(confidence, 4),
         summary=(raw_res.get("explanation") or "").strip() or "Chưa đủ bằng chứng để kết luận. Hãy xác minh qua kênh chính thức.",
+        analysis_status=analysis_status,
+        model_score=model_score,
+        warning_level=warning_level,
+        decided_by=decided_by,
+        content_class=content_class,
+        evidence=evidence,
     )
 
     radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res)
-    recommendations = _build_recommendations(is_scam, risk_level)
+    recommendations = _build_recommendations(content_to_scan, is_scam, risk_level)
 
     result_data = ScanResultData(
         scan_id=scan_id,

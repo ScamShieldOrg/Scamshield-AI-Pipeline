@@ -84,6 +84,7 @@ class TwoTierRouter:
             temperature=tier1_temperature,
             cost_alpha=tier1_cost_alpha,
         )
+        self.url_signals = UrlSignals()
         self.tier2_registry = ModelRegistry(
             api_key=api_key,
             config_path=config_path,
@@ -188,7 +189,7 @@ class TwoTierRouter:
                 "final_confidence": t1_confidence,
                 "is_scam": (standardized_t1_label == "SCAM-RISK"),
                 "is_unknown": False,
-                "scam_type": "Mạo danh liên kết ngân hàng & Đe dọa khóa tài khoản" if standardized_t1_label == "SCAM-RISK" else "Thông báo giao dịch chính danh",
+                "scam_type": ("Cảnh báo rủi ro lừa đảo (ViSoBERT Tier 1)" if standardized_t1_label == "SCAM-RISK" else "Nội dung an toàn / độ tin cậy cao"),
                 "risk_level": "HIGH" if standardized_t1_label == "SCAM-RISK" else "LOW",
                 "explanation": f"Xử lý trực tiếp tại thiết bị với độ tự tin {t1_confidence*100:.1f}% >= {self.tau*100:.0f}%.",
                 "routing_path": "TIER_1_DIRECT_FASTPATH",
@@ -241,7 +242,7 @@ class TwoTierRouter:
                     "final_confidence": council_res["consensus_scam_prob"],
                     "is_scam": (c_label == "SCAM-RISK"),
                     "is_unknown": (c_label == "UNKNOWN"),
-                    "scam_type": "Dấu hiệu thao túng tâm lý & Mạo danh người quen mượn tiền",
+                    "scam_type": council_res.get("scam_type") or ("Dấu hiệu rủi ro lừa đảo (Hội đồng Forensic)" if c_label == "SCAM-RISK" else "Nội dung an toàn (Hội đồng Forensic)"),
                     "risk_level": council_res["risk_level"],
                     "explanation": council_res["unified_rationale"],
                     "routing_path": "TIER_2_FORENSIC_COUNCIL",
@@ -274,9 +275,8 @@ class TwoTierRouter:
         )
         logger.info(f"Escalating message to Tier 2 Single Cloud LLM. Reason: {fallback_trigger}")
 
-        fallback_prompt = (f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{tier2_input.message}"
-                           f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}"
-                           f"\n\n{rag_prompt}")
+        fallback_prompt = (f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{message}"
+                           f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}")
         log_tier2_prompt(logger, stage="registry_fallback", system_prompt=SYSTEM_PROMPT_TIER_2,
                          user_prompt=fallback_prompt)
         t2_response = self.tier2_registry.generate_content(
