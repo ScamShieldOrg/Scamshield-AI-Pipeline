@@ -1,0 +1,1070 @@
+{
+  "version": "1.0.0",
+  "total_samples": 150,
+  "category_counts": {
+    "GAMBLING_BETTING_PROMO": 30,
+    "BRAND_PROMO_VOUCHER": 30,
+    "BILLING_UTILITY": 25,
+    "HEALTH_MEDICAL": 7,
+    "DAILY_CONVERSATION": 18,
+    "BORDERLINE_AUTH_OTP": 20,
+    "SCAM_SAMPLES_HARD": 20
+  },
+  "label_counts": {
+    "ham_label_0": 130,
+    "scam_label_1": 20
+  },
+  "description": "Bộ thách thức 150 mẫu tin biên khó (challenge set) đóng băng phiên bản cho ScamShield",
+  "samples": [
+    {
+      "message_id": "COM_1020",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Toàn dân tích cực hưởng ứng Tháng hành động phòng, chống ma túy (tháng 6), Ngày quốc tế phòng, chống ma túy và Ngày toàn dân phòng, chống ma túy (ngày 26/6).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1043",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach da duoc thanh toan [MONEY] tu nhan vien [NUMBER], Ngay GD: [DATE] [TIME]. Ma GD 250706643916506. LH [NUMBER] ([MONEY]). Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_110",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nThanh toan QR\nNguoi nhan: HAMBURGERHAPI \nSo tien: [MONEY]\nMa OTP: 705755 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1154",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "MxIDangKi[KGTLTE.birapple.com]CoQuaNamTamNghinBgroupsgooglecomaM",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1189",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "888TO tai app nhan ngay [MONEY]~[MONEY],phat qua khung [NUMBER] ty.combo thuong khung [MONEY],Nhan thuong ngay tai https://ads888to44.com/?cid=[NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1190",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "(TPBank) Hoa don Vi Tra Sau Momo T11.[NUMBER] cua QK co du no [MONEY]. QK co the TT toan bo du no hoac TT toi thieu truoc ngay [DATE]. Vui long bo qua neu da TT",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1209",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Tai ngay app pkwin dang ki tai khoan nhan ngay [MONEY]-nap dau tang [MONEY] cho no hu,ban ca tai https://bit.ly/497zddL",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1212",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Dang ky [MONEY]-Tai App nhan [MONEY]-Khuyen mai nap dau 100% Lixi moi ngay [MONEY] VIP [MONEY] https://pk7989.com/a666",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1220",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[QC] MỞ LÀ 100% TRÚNG QUÀ.\nViettel tặng Quý khách ưu đãi giá trị lên đến [MONEY] khi tham gia mở quà CT Săn kho báu tại https://viettel.vn/SanKhobau. Mỗi khách hàng chỉ có một lượt chơi duy nhất. LH 198 ([MONEY]). Từ chối QC, soạn TC4 gửi 199.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1234",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach da duoc thanh toan [MONEY] tu nhan vien [NUMBER], Ngay GD: [DATE] [TIME]. Ma GD 260110621404662. LH [NUMBER] ([MONEY]). Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1253",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Cam on ban da hoan tat kiem tra diem tin dung CIC tren MoMo. De dang nhap ung dung CIC, vui long su dung: Ten dang nhap: [NUMBER], Mat khau: x!{qvB=!C+2+",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_127",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 907381 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1323",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] NẠP THẺ LIỀN TAY - DATA XÀI NGAY!\nTặng 20% giá trị tất cả thẻ nạp vào tài khoản viễn thông trong ngày [DATE]. Tiền khuyến mại sử dụng truy cập Internet trong 15 ngày. Nạp thẻ online tại các ví điện tử, ứng dụng thanh toán hoặc tại https://viettel.vn/naptienkm . Chi tiết gọi 197 bấm phím 19 ([MONEY]). Trân trọng.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1343",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] LƯỚT NET SIÊU MƯỢT VỚI 5G.\nSoạn 5G135N gửi 191 để xác nhận đăng ký gói cước: [MONEY]/30 ngày có 180GB (6GB/ngày), xem [NUMBER] gói Tiêu chuẩn.\nGói cước gia hạn sau 30 ngày. Chương trình dành riêng cho Quý khách. Liên hệ 198 ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1348",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Tai khoan cua Quy khach sap het. Soan UT hoac Y gui [NUMBER] de xac nhan cong [MONEY] vao tai khoan (cuoc DV [MONEY]). Muon cong muc thap hon, soan UTx gui [NUMBER] (x la gia tri can cong va la boi so cua 5, 1 don vi cua x tuong ung [MONEY], toi thieu x=10. Vi du: UT10 de cong [MONEY] vao tai khoan) hoac bam 1588sodienthoai de yeu cau nguoi nghe la thue bao Viettel tra phi cuoc goi. Chi tiet soan HD gui [NUMBER] hoac LH [NUMBER] ([MONEY]). Xin cam on.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1367",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "Viettel thong bao: Yeu cau cap nhat thong tin thue bao cua Quy khach tren My Viettel da duoc phe duyet. Tran Trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_142",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Doi thanh cong [POINT] tieu dung Viettel++ thanh 20 MB Data de Quy khach trai nghiem dich vu. Han su dung truoc [DATE]. Tong diem tieu dung con lai trong tai khoan Viettel++ cua Quy khach la [POINT]. \nDe kiem tra lich su doi diem va lua chon uu dai hap dan khac, vui long truy cap https://myvt.page.link/vtplus. Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1421",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "VTMONEY: Nhap ma xac thuc OTP 4804 de dang nhap SDT [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1431",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach co [MONEY] trong tai khoan. Bam goi *098*3# de co 3GB voi [MONEY]/3 ngay hoac *098*989# ([MONEY]/3 ngay) co 15GB (5GB/ngay), mien phi [TIME]/cuoc noi mang, [TIME] ngoai mang,\nSMS noi mang va [NUMBER]. Goi cuoc gia han khi het chu ky. De biet thong tin cac uu dai khac, bam goi *098# hoac truy cap https://vietteltelecom.vn/goidata. Chi tiet LH 198 ([MONEY]). Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1491",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Xin chào, Bạn có muốn tìm công việc bán thời gian không ? với mức lương [MONEY]-[MONEY] 1 tháng mỗi ngày ít nhất [MONEY] không phí phụ thu. công việc đơn giản, làm tại nhà nếu bạn muốn tham gia với công việc này xin hãy liên hệ ngày với zalo ID:+[NUMBER]\ndưới 23t xin vui lòng không tham gia\nSao chép liên kết vào trình\nduyệt :https://zalo.me/\n[NUMBER]\n1 đến 1 dịch vụ",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_154",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 453108 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1584",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "[FPT_Tele¢om] Hợp đồng mạng Internet cáp quang của gia đình bạn sắp hết hạn ưu đãi. Đăng ký gia hạn gói combo giá rẻ giảm 50% chỉ hôm nay: http://fpt.lich-baotri.net",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1621",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "[SkyWay_Vn] Đầu tư vào tập đoàn công nghệ vận tải tương lai, nhận cổ tức trọn đời và cơ hội sở hữu bất động sản nghỉ dưỡng. Đăng ký sở hữu cổ phần: http://skyway.co-phan-onl.cc",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_166",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 418138 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1688",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "[MBS_ChungKhoan] Trân trọng thông báo: Gói hợp đồng đầu tư ủy thác an toàn \"Tích lũy tương lai\" của quý khách đã phát sinh lợi nhuận kỳ 1. Vào ví hệ thống kiểm tra: http://mbs.quanly-danhmuc.vip",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1752",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Lich tam ngung cap dien: Ma khach hang [NUMBER] hien dang no tien dien 2 thang. Lich cat dien se duoc thi hanh vao luc 16h00 chieu nay. Moi thac mac khieu nai ve hoa don vui long goi ngay can bo quan ly: [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1809",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Bạn được tặng 1 phần quà tri ân. Liên hệ Zalo [NUMBER] gặp NV Hà để xác nhận địa chỉ nhận hàng.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_182",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 977424 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1838",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Con đang cấp cứu ở bệnh viện sau tai nạn, cần đóng viện phí gấp [MONEY]. Bố/mẹ chuyển ngay vào STK 4242349798309 MB Bank giúp con, số con bị hỏng rồi.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1859",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Để nhận tiền hoàn thuế [MONEY], bạn cần chuyển trước phí xử lý [MONEY] vào STK [NUMBER] (BIDV) chủ TK DŨNG. Sau 15p tiền sẽ về.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1860",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Bạn đã trúng thưởng [MONEY] chương trình tri ân. Để nhận, đóng phí hồ sơ [MONEY] vào STK [NUMBER] MB Bank, chủ TK Phạm Mai.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_188",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: SPAY_TRA SUA TECHA\nSo tien: [MONEY]\nMa OTP: 332300 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1938",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Bên em là kế toán cty, lỡ chuyển dư [MONEY] cho anh/chị. Phiền chuyển lại giúp em qua số [NUMBER] (Techcombank) ạ, em cảm ơn.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_1953",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Đơn hàng [NUMBER] đang giữ tại bưu cục do thiếu cước [MONEY]. Vui lòng thanh toán vào STK [NUMBER] (Techcombank) trước [TIME] hôm nay để được giao.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2008",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "ghUserMoiTangQua100Ka kdTuts.URBidv.com uugroupsgooglecom",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2063",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "VCB: Quy khach con diem Priority sap het han. Hay quy doi ngay tai vcbankpriority.com de tiep tuc tan huong quyen loi.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_207",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 312853 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2086",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Số điện thoại của Quý khách đã đăng ký tài khoản định danh VNeID mức 2 và được xác thực thông tin theo quy định của Thông tư 08/[NUMBER]/TT-BKHCN.\nQuý khách yên tâm sử dụng dịch vụ và KHÔNG CẦN thực hiện thêm bất kỳ thao tác xác thực nào.\nViettel trân trọng cảm ơn Quý khách đã đồng hành!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2091",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "(MEDIGO) Ma OTP cua quy khach la: 360402. Vui long khong chia se OTP nay cho bat ky ai, tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2096",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Thue bao [NUMBER] duoc +300MB Data/[TIME] khi dang ky thanh cong goi cuoc Toan tu duy. Moi ban soan KUS5 gui 888 dang ky va nhan quyen loi. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2100",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Thue bao [NUMBER] duoc +6GB data/[TIME] khi soan HI12 gui 888 de dang ky dich vu HiPlay va nhan them quyen loi mien cuoc data xem YouTube +01 tai khoan Premium xem noi dung tren ung dung HiPlay. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2107",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Danh rieng cho thue bao [NUMBER] CO HOI +1.2GB data/[TIME] khi dang ky va gia han thanh cong lien tiep 6 ngay dich vu Arabica Game, soan BICA3 gui 888 de dang ky va nhan uu dai. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2109",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Tang thue bao [NUMBER] 1.2GB data/[TIME] khi dang ky va gia han thanh cong lien tiep 6 ngay dich vu Vui hoc +01 tai khoan on luyen kien thuc chuan chuong trinh tren vuihoc.vn. Soan VHO5 gui 888 de dang ky. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2111",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Tang 200MB Data/[TIME] va quyen loi choi mien phi 100% cac game tai http://gamehappy.vn khi thue bao [NUMBER] soan GHP5 gui 888 de dang ky dich vu. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2112",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) TANG NGAY 1.2GB/[TIME] cho thue bao [NUMBER] khi dang ky va gia han thanh cong lien tiep 10 ngay dich vu GameTP. Moi soan GTP5 gui 888 de dang ky va trai nghiem choi game tai https://gametp.vn. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2114",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Thue bao [NUMBER] soan OLTV5 gui 888 de nhan ngay 300MB data/[TIME] + quyen loi xem giai tri & eSports tren ON Live TV. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2123",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Nghe karaoke nhan them data! Moi thue bao [NUMBER] soan MKA8 gui 888 de dang ky goi cuoc MKA8 va nhan ngay: \n+ 1GB data/[TIME];\n+ Xem va nghe karaoke khong gioi han tai https://mkara.com.vn.\nCuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2127",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Nhan 1GB data/[TIME] + xem va nghe karaoke khong gioi han tai https://mkara.com.vn khi thue bao [NUMBER] soan MKA8 gui 888. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2128",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Nhan 200MB Data/[TIME] + 01 tai khoan goi xem phim khong gioi han tren Galaxy Play, cung luc tren 4 thiet bi, khi thue bao [NUMBER] soan GPM5 gui 888. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2132",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) De choi game mien phi tai https://onegame.com.vn/ va nhan 50MB data/[TIME], moi thue bao [NUMBER] soan ONG5 gui 888 de dang ky dich vu One Game. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2135",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "UBND xa Hiep Hoa thong bao: Ho so so H53.164-[NUMBER]-[NUMBER] cua Quy khach da hoan thanh. Kinh moi quy khach den nhan ket qua. Quy khach vui long truy cap duong link https://dgmdhl.tayninh.gov.vn/dgtt?sbn=H53.164-[NUMBER]-[NUMBER] de danh gia ve chat luong giai quyet thu tuc hanh chinh.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2164",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(TB) CO HOI RINH OTO DIEN VINFAST VF5 va +[MONEY] vao TKC! Thue bao [NUMBER] soan COMIT5 gui 888 de tham gia CTKM va trai nghiem dich vu 5Ggaming. Xem them tai laixevenha.vn. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2171",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Thue bao [NUMBER] co ngay CO HOI trung Oto dien Vinfast VF5 hoac +[MONEY] vao TKC khi tham gia CTKM laixevenha.vn. Moi ban soan BCTA5 gui 888 de dang ky goi Luyen thi tieng Anh va nhan co hoi trung thuong. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2173",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "Chuc mung Quy khach da nap the thanh cong! VinaPhone kinh tang Quy khach 20% gia tri the nap. Gia tri khuyen mai duoc su dung goi/nhan tin cac nha mang trong 15 ngay ke tu ngay nap the. CSKH: [NUMBER]([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2178",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Prudential thong bao da xu ly xong yeu cau chuyen khoan [MONEY] cua Ho so/Hop dong [NUMBER] vao ngay [DATE]. Quy khach vui long theo doi tai khoan nguoi thu huong. Thoi gian hoan tat giao dich phu thuoc ngan hang thu huong. Tran trong",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2196",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(CSKH) Vi vu dịp Lễ xanh hơn, tiết kiệm hơn cùng ưu đãi giảm 20% dịch vụ di chuyển GreenSM của VinaPhone Plus. Mời quý hội viên đổi điểm tích lũy nhận ngay ưu đãi tại https://my.vnpt.com.vn/adv/xanhSM . CSKH: [NUMBER] ([MONEY]). Trân trọng!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2202",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) CHOI GAME CUC DA tai Igame5 va nhan them 50MB data/[TIME]. Thue bao [NUMBER] soan IGA1 gui 888 de dang ky va trai nghiem. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2216",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "Moi KH HOA THI BACH LAN (SN [NUMBER]) xem ket qua XN tai \n\nhttps://hsdt.umc2.edu.vn/rs/[NUMBER]-3817d150/MDg0ODI1NTczOQ",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2217",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) NHAN NGAY 50MB data/[TIME] khi thue bao [NUMBER] soan BICA3 gui 888 de dang ky dich vu Arabica Game va thoai mai choi game tai https://bicagame.vn. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2222",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Doc sach khong gioi han tren nen tang VBOOKs & co ngay 100MB data/[TIME]. Moi thue bao [NUMBER] soan VBO5 gui 888 de dang ky dich vu VBOOKs. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_224",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 101224 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2260",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(TB) ĐẶC QUYỀN RIÊNG DÀNH CHO BẠN!\nVinaPhone ưu đãi gói V70PN chỉ [MONEY]/30 ngày với:\n+1500ph gọi nội mạng (tối đa 10ph/cuộc), 200ph gọi ngoại mạng.\n+ 0,5GB Data/30ngày.\nSoạn tin nhắn DK V70PN gửi 900 hoặc truy cập https://digishop.vnpt.vn/seller/v70pn?c=n43vMJw để đăng ký. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2264",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(CSKH) 30 NĂM KẾT NỐI – TRI ÂN [NAME]!\nThay lời cảm ơn sâu sắc gửi tới Quý khách đã luôn tin tưởng và đồng hành trên hành trình 30 năm qua, VinaPhone trân trọng gửi tặng hàng ngàn món quà và ưu đãi hấp dẫn! Kính mời Quý khách tham gia “Vòng quay tri ân 30 năm” trên ứng dụng My VNPT tại https://my.vnpt.com.vn/adv/luckydrawn để nhận quà từ ngày [DATE] đến hết ngày [DATE]. CSKH: [NUMBER] (miễn phí). Trân trọng!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2265",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(TB) +100MB Data/[TIME] cho thue bao [NUMBER] khi dang ky thanh cong goi cuoc COMIT5 dich vu 5Ggaming. Moi ban soan COMIT5 gui 888 hoac truy cap https://dvs.vnpt.vn/adv/402 de dang ky. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2268",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Trai nghiem sieu thu thach voi toan bo game tren agame.vn danh rieng cho thue bao [NUMBER] va nhan them 300MB Data/[TIME]. Moi ban soan AGAME5 gui 888 de dang ky. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2278",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) QUET SACH CUOC GOI RAC! Chi [MONEY]/[TIME], co ngay iCallme Premium de tu dong canh bao spam, chan cuoc goi lam phien. TANG THEM 200MB Data/[TIME] khi thue bao [NUMBER] soan ICM5 gui 888 hoac truy cap https://dvs.vnpt.vn/adv/743 de dang ky. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2280",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "(TB) Co ngay +6GB Data/[TIME] + mien phi Data xem Youtube + 01 tai khoan Premium xem tat ca noi dung tren ung dung HiPlay. Soan HI12 gui 888 de dang ky. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2281",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) SO HUU NGAY 300MB data/[TIME] + quyen loi xem toan bo cac giai dau eSports, gameshow, giai tri,... tren ON Live TV. Thue bao [NUMBER] soan OLTV5 gui 888 de nhan uu dai. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2299",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(TB) Nạp liền tay, vận may trúng lớn! \nVinaPhone dành tặng riêng Quý khách 20% giá trị thẻ nạp duy nhất hôm nay [DATE] (khuyến mại được sử dụng để gọi/nhắn tin trong 15 ngày).\nĐặc biệt, nạp từ [MONEY] để có cơ hội trúng lớn mỗi ngày: Chuyến du lịch 5 sao trị giá [MONEY] đồng, cộng [MONEY] - [MONEY] vào tài khoản. Chi tiết: khuyenmai.vinaphone.com.vn . CSKH: [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_230",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 802361 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2306",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) TANG 100MB DATA toc do cao trong [TIME] cho thue bao [NUMBER] soan DK GTP5 gui 888 de dang ky dich vu GameTP, nhan quyen loi choi game co tuong cuc ky hap dan tại https://gametp.vn/. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2313",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) Tang 100MB DATA toc do cao trong [TIME] cho thue bao [NUMBER] soan GAMEV5 gui 888 de dang ky dich vu GameV, nhan quyen loi choi mien phi 100% cac game tai https://gamev.vn/. Cuoc [MONEY]/[TIME]. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2354",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(TB) TANG 300MB DATA/7 ngay khi dang ky dich vu Cartoon Game va choi game, xem video tai https://cartoongame.vn! Danh cho thue bao [NUMBER], soan DK CTG25 gui 888. Cuoc [MONEY]/7 ngay. CSKH [NUMBER] ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_240",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Doi thanh cong [POINT] tieu dung Viettel++ thanh 20 MB Data de Quy khach trai nghiem dich vu. Han su dung truoc [DATE]. Tong diem tieu dung con lai trong tai khoan Viettel++ cua Quy khach la 3.[POINT]. De kiem tra lich su doi diem va lua chon uu dai hap dan khac, vui long truy cap https://myvt.page.link/vtplus. Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2432",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "Ong/ba co lich kham benh tai BV DK Van Hanh vao ngay [NUMBER]. De viec dieu tri hieu qua hon, mong ong/ba den dung ngay tai kham , xin cam on!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2443",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(TB) Đặt lịch NẠP THẺ ƯU ĐÃI 50%! Duy nhất [DATE], My VNPT dành tặng bạn KHUYẾN MẠI 50% khi Nạp điện thoại VinaPhone cho thuê bao trả trước (khuyến mại sử dụng gọi/nhắn tin trong 15 ngày)! Áp dụng cho mọi mệnh giá, không giới hạn tại https://my.vnpt.com.vn/adv/napthe50. CSKH: [NUMBER] nhánh 3 ([MONEY]). Trân trọng!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2450",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "Soan ngay YB gui [NUMBER] de giai tri voi rat nhieu game cuc HOT. MIEN PHI den 7 ngay cho thue bao dang ky lan dau. Phi dv sau KM: [MONEY]/ngay va tu dong gia han. De soan tin nhan nhanh bam: https://tinyurl.com/5n7zehv7. CTLH [NUMBER] ([MONEY])",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2451",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "Soan ngay YC gui [NUMBER] de xac nhan dang ky WHOCALL - CHAN SPAM CALL/SMS. NHAN NGAY DATA 3G/4G khong GIOI HAN + [TIME] goi/ngay. Mien phi dung thu lan dau. Phi dv sau KM: [MONEY]/ngay. De soan tin nhan ngay bam: https://tinyurl.com/2dbd5xtu. Chi tiet LH [NUMBER] ([MONEY])",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2454",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "Choi Game khong can cai dat. MIEN PHI den 7 ngay tu Vietnamobile. Soan ngay YB gui [NUMBER]. Phi dv sau KM: [MONEY]/ngay va tu dong gia han. De soan tin nhan nhanh bam: https://tinyurl.com/5n7zehv7. CTLH [NUMBER] ([MONEY])",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_246",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach co [MONEY] trong tai khoan.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2483",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "Deal cua ban: E Coupon giam gia [MONEY] tai he thong nha hang Suon Muoi. Ma QR: https://id.dealtoday.vn/qr/[NUMBER]-fc79cd51ef10fdce. LH: [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_249",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nNap tien dien thoai\nNguoi nhan: [NUMBER]\nSo tien: [MONEY]\nMa OTP: 043489 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2502",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Ma xac nhan cua ban tai Pharmacity la: [NUMBER], ma xac nhan chi co hieu luc trong vong [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2507",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "OTP cua Quy Khach la: 12731095. Ma xac thuc giao dich tren vi co hieu luc trong vong [TIME]. QK TUYET DOI khong cung cap OTP cho nguoi khac tranh bi lua dao!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2510",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) CHUC MUNG! Quy khach du dieu kien nhan 7GB toc do cao su dung trong 7 ngay tu goi cuoc DT30. Soan DK gui [NUMBER] de nhan data. Gia chi [MONEY]/7 ngay. Loi moi co hieu luc trong 03 ngay. Tu choi QC, soan TC gui [NUMBER]. CSKH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2559",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "GHTK - [NUMBER] la ma xac nhan su dung de dang nhap ung dung iGHTK cua ban",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2568",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Ma OTP cua quy khach la: 257156. Ma OTP chi su dung 1 lan trong qua trinh mo Tai khoan. Vui long khong chia se cho ai. Hotline [NUMBER]. SMSID: V3dK9DlHsAy",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2581",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "QK duoc tang 1 mui Vac xin Cum mien phi hoac ma tru ngay [MONEY] cho hd tu [MONEY] tai VNVC. DK nhan qua tai https://l.o2o.vn/bUjz truoc 30/6/23. Tu van [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2582",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "Vi mot cong dong duoc bao ve boi Vac xin, Nhan hang Angela Gold tang rieng QK mon qua suc khoe tai He Thong Tiem Chung VNVC: De nhan 1 mui tiem cum mien phi, Soan VNVC Y1 gui [NUMBER]; De nhan ma giam [MONEY] cho hoa don tu [MONEY],Soan VNVC Y2 gui [NUMBER], gui truoc 10/06/23. LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2584",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "BAN DUOC UNG MIEN PHI [MONEY] de tiep tuc duy tri lien lac. Soan Y gui [NUMBER] ngay trong hom nay. So tien Ung se duoc cong vao tai khoan TK_AP1 va thoi gian u dung len den [TIME]. QK se chi hoan tra [MONEY] trong lan nap the tiep theo. Tu choi nhan tin soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2585",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] MyMobiFone nang cap goi Linh hoat. Kinh moi Quy khach trai nghiem tinh nang Tao goi cuoc tren ung dung: linh hoat tuy chinh Data va thoai theo nhu cau ca nhan cua Quy khach, de dang quan ly, trai nghiem tao goi cuoc khac biet. Truy cap ngay tai: https://mymobifone.page.link/goi-cuoc",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2617",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "Goi 12FD50 da duoc gia han (tru [MONEY]), han su dung hien tai den [DATE] [TIME], khong ap dung khi Chuyen vung trong nuoc. De kiem tra goi soan: KT_ALL gui 999. Chuc mung Quy khach da may man nhan duoc 5GB LUU TRU MIEN PHI tren ung dung luu tru du lieu ca nhan mobiCloud cua MobiFone. Cai dat ngay ung dung mobiCloud tai https://bit.ly/3DpNDoe de trai nghiem. [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2639",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "(QC)Anh/chi nao su dung mang VinaPhone soan T6 gui [NUMBER] huong 4G mien phi 100%. Luot web tha ga tai http://glive.vn/tritue.Sau KM [MONEY]/ngay. TCQC,soan TC gui [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_269",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien den TK Sacombank\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 417274 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2705",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(QC) +[MONEY] vao TKC cho TB [NUMBER], soan DKG gui [NUMBER] ([MONEY]) de nhan co hoi sau 5 ngay GHTC dv Mgame, them co hoi NHAN 10 CAY VANG SJC, xe may Honda RSX, sau km [MONEY]/ngay. LH [NUMBER] ([MONEY]) hoac tai vangtraotay.vn. TCQC: TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2713",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(QC) NHAN NGAY [MONEY] khi soan DKV gui [NUMBER] ([MONEY]) sau 05 ngay duy tri dv mDoctor, them co hoi trung 10 CAY VANG SJC tu CTKM vangtraotay.vn. Sau KM [MONEY]/ngay. LH [NUMBER] ([MONEY]). TCQC soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2724",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(QC) Nhan ngay [MONEY] vao TKC khi soan: DK gui [NUMBER]([MONEY]) sau 05 ngay GHTC,them co hoi TRUNG 10 CAY VANG SJC.Sau KM [MONEY]/ngay.TCQC soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2730",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "(QC) TANG [MONEY] vao TKC cho Thue bao [NUMBER] khi soan A gui [NUMBER] ([MONEY]) sau 5 ngay duy tri dv Suc khoe hot va them co hoi so huu 10 CAY VANG SJC tu CTKM cua VinaPhone tai vangtraotay.vn chi voi [MONEY]/ngay sau km. LH [NUMBER] (mien phi). TCQC: TC gui [NUMBER]\\",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2746",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "Chuc mung ban da mua dung san pham cua thuong hieu APESTOMEN. De biet them thong tin chi tiet quy khach vui long truy cap website www.apestomen.com.vn",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2752",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] may man duoc MIEN PHI su dung 4G VINAPHONE TOC DO CAO khi soan KM gui [NUMBER] ([MONEY]) trai nghiem giaitribox.vn. LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2777",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(QC) QUY KHACH [NUMBER] soan CS gui [NUMBER] ([MONEY]) de nhan ngay MIEN PHI 1OO% 3G/4G TOC DO CAO. Trai nghiem histar.ansovang.vn. Sau km [MONEY]/ngay.TCQC:TC gui [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2786",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] may man duoc MIEN PHI su dung 4G VINAPHONE TOC DO CAO khi soan DK gui [NUMBER] ([MONEY]) trai nghiem v.fzone.vn. LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2787",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] duoc huong Mien phi 100% Data 3G/4G toc do cao. Soan: DK1 gui [NUMBER] de nhan khuyen mai. de trai nghiem dv http://funclip.vn mien Phi su dung dich vu ngay dau, sau km [MONEY]/ngay TCQC soan TC gui [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2789",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC)Chuc Mung! Soan DK gui [NUMBER] ([MONEY]) de nhan MIEN PHI 1OO% 3G/4G TocDoCao.Chi 1 tin nhan->Luot web tha ga phaimanhplus.vn. Sau km3000d/ngay.TuChoi>TC gui9855",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2814",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung Quy khach duoc huong MIEN PHI 1OO% 3G/4G TOC DO CAO tai http://bongdahot.vn khi soan DK 3G gui [NUMBER] ([MONEY]). Sau km [MONEY]/ngay. TCQC soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2826",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] may man duoc MIEN PHI su dung 4G VINAPHONE TOC DO CAO khi soan DK gui [NUMBER] ([MONEY]) trai nghiem v.hayxem.vn . LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2839",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] may man duoc MIEN PHI su dung 4G VINAPHONE TOC DO CAO khi soan VIP gui [NUMBER] ([MONEY]) trai nghiem tintaichinh360.vn. LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2842",
+      "category": "GAMBLING_BETTING_PROMO",
+      "gold_label": 0,
+      "message": "(QC) Anh/chi nao su dung mang VinaPhone soan DK gui [NUMBER] de NHAN ngay [MONEY] vao TKC va dung 4G mphi 100% nhe.Tuchoi TC gui [NUMBER]. LH [NUMBER]([MONEY]/phut)",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_285",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 210052 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2858",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) Chuc mung TB [NUMBER] may man duoc MIEN PHI su dung 4G VINAPHONE TOC DO CAO khi soan VIP gui [NUMBER] ([MONEY]) trai nghiem itravels.vn. LH [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2882",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "CHUC MUNG NAM MOI! Vietnamobile kinh chuc Quy khach va Gia dinh nam moi An Khang, Thinh Vuong, Van Su Nhu Y. Tran trong cam on Quy khach da tin tuong su dung dich vu, va dong hanh cung VNM trong thoi gian qua.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2913",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "Chuc mung QK da duoc tang ma giam gia 100% cho 2 SIM sieu HOT voi uu dai MIEN PHI DATA, MIEN PHI NOI MANG. Hay bam goi *092# nhanh 3 (Ma khuyen mai cua ban) ngay hom nay de kiem tra va su dung ma. Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2932",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "Quy khach du dieu kien Vay tien mat hoac vay mua thiet bi tai cua hang MobiFone len toi [MONEY] VND voi LAI SUAT UU DAI. Soan V gui [NUMBER] (mienphi) trong vong [TIME] de dang ky va dong y cho MobiFone chia se thong tin cua ban voi chuong trinh. Chi can CMND va ho khau. Tu choi, soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_2934",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "(QC) CHUC MUNG TB [NUMBER]! QK da TRUNG [MONEY] vao TKC, soan XN gui [NUMBER]([MONEY]) de nhan TIEN+ co hoi TRUNG iPHONE X, 1 [NAME], the cao [MONEY] cua MOBIFONE. HOAN TOAN MIEN PHI HOM NAY. LH [NUMBER]([MONEY]/p). Sau KM [MONEY]/ngay. TCQC, soan TC gui [NUMBER]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_296",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 581329 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_298",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nThanh toan QR\nNguoi nhan: GS25 VIETNAM\nSo tien: [MONEY]\nMa OTP: 751002 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_299",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "[TB] MUNG NAM MOI! Tang 20% gia tri tat ca cac the nap vao tai khoan vien thong trong ngay 29/12, tien KM de goi va nhan tin noi mang trong 15 ngay. CT danh rieng cho Quy khach. LH 198 ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_315",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] NẠP THẺ HÔM NAY (10/01) - NHẬN NGAY KM: Tặng 20% giá trị tất cả thẻ nạp, tiền KM sử dụng nội mạng đến hết [DATE]. Nạp thẻ online tại https://km.vtmoney.vn/314y/kmdaitra . Chi tiết gọi 197 bấm phím 19 ([MONEY]). Trân trọng.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_319",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Doi thanh cong [POINT] tieu dung Viettel++ thanh 100 MB Data de Quy khach trai nghiem dich vu. Han su dung truoc [DATE]. Tong diem tieu dung con lai trong tai khoan Viettel++ cua Quy khach la 2.[POINT]. De kiem tra lich su doi diem va lua chon uu dai hap dan khac, vui long truy cap https://myvt.page.link/vtplus. Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_320",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Data thả ga, chỉ với [MONEY]!\n1. Soạn FB7 gửi 191: [MONEY]/7 ngày miễn phí data truy cập Facebook và nhắn tin Messenger\n2. Soạn 1N gửi 191: [MONEY]/ngày có 5GB, [TIME] gọi ngoại mạng, miễn phí 10p/cuộc gọi nội mạng, SMS nội mạng và xem [NUMBER]\nGói cước gia hạn khi hết chu kỳ. Chi tiết LH 198 ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_354",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 119540 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_372",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "Quy khach duoc cong them [POINT] Viettel++ boi giao dich Tieu dung vien thong thang 01/[NUMBER]. Thoi han su dung diem den [DATE]. Hay truy cap https://myvt.page.link/vtplus tren My Viettel hoac *098# de doi diem sang Data, SMS, Phut goi cung nhieu uu dai gia tri khac. Chi tiet LH 198. Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_373",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "Quy khach dang thuc hien\nChuyen tien nhanh 247 den TK\nNguoi nhan: [NAME]\nSo tien: [MONEY]\nMa OTP: 869524 hieu luc [TIME]",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_374",
+      "category": "BORDERLINE_AUTH_OTP",
+      "gold_label": 0,
+      "message": "He thong tu dong tam khoa do dang nhap sai mat khau 3 lan lien tiep va tiep tuc dang nhap lai sau [TIME]. Neu khong phai Quy khach thuc hien, vui long lien he [NUMBER] de duoc ho tro.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_417",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "VTMONEY: Nhap ma OTP 8898 de xac thuc dang ky tai khoan Viettel Money. Trong truong hop Quy khach khong yeu cau, vui long bo qua tin nhan nay.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_429",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach duoc cong [POINT] do Giao dich thanh toan DV vien thong qua VIETTEL MONEY vao ngay [DATE].Truy cap https://vtmoney.onelink.me/314y/loyalty de doi diem sang cac qua tang cua chuong trinh. Tran trong.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_431",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Quy khach da thanh toan thanh cong [MONEY] cuoc cho thue bao mobile [NUMBER]. Phi GD [MONEY]. [DATE] [TIME].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_451",
+      "category": "HEALTH_MEDICAL",
+      "gold_label": 0,
+      "message": "Cong DVC Bo Cong an Ho so Dang ky tam tru - MHS: G01.[NUMBER]-[NUMBER]-[NUMBER] cua ong/ba da duoc tra ket qua xu ly. Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_493",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "TB Dung quen Ban dang co voucher MIEN PHI [MONEY] khi nap dien thoai Viettel. Mo app hoac truy cap https://km.vtmoney.vn/314y/uudai2 de su dung uu dai Ban nhe.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_586",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Nhac ban Viettel Money co rat nhieu UU DAI HOT dat xe tu Be, Gojek,... Doi ngay diem Viettel++ tai https://km.vtmoney.vn/314y/dichuyes ban nhe!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_618",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Bam goi ngay 1530967145402 de tiep tuc lien lac voi so dien thoai [NUMBER] do tai khoan cua Quy khach khong du de thuc hien cuoc goi. Cuoc goi [MONEY]/p, tinh cuoc 6s+1, cuoc DV [MONEY]. Quy khach vui long soan HD gui [NUMBER] de duoc huong dan. Tu choi nhan tin, soan TC gui [NUMBER].",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_683",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Tai khoan cua Quy khach sap het. Soan:\n1 gui 211 de cong [TIME] noi mang ([MONEY]/p), su dung trong 15 ngay\n2 gui 211 de cong [TIME] ngoai mang ([MONEY]/p), su dung trong 7 ngay\n3 gui 211 de cong 100 tin nhan noi mang ([MONEY]/tin), su dung trong 15 ngay\n4 gui 211 de cong 20 tin nhan ngoai mang ([MONEY]/tin), su dung trong 7 ngay\nChi tiet LH 198 (mien phi).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_687",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[QC] Tặng bộ ưu đãi đến [MONEY] từ Be (2 mã giảm giá beBike + beCar) khi mua gói YT15K ([MONEY]/7 ngày có tối đa 25GB truy cập YouTube). Gói cước gia hạn sau 7 ngày. Đăng ký tại https://myvt.page.link/yt15k . Chi tiết LH 198 ([MONEY]). Từ chối QC, soạn TC3 gửi 199.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_742",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "kkblvâàogejmnhâjnlieentàamtàamnqgin?hdbpkc.tpqaz.de]tàâilôjcdôfjdafordxp",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_759",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[QC] Mời Quý khách trải nghiệm các tiện ích trên My Viettel: Quản lý tài khoản Internet và Truyền hình, chuyển đổi gói cước, quản lý thiết bị modem wifi từ xa tại https://myvt.page.link/myviettel. Chi tiết LH 198 ([MONEY]). Từ chối QC, soạn TC3 gửi 199.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_761",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "JtSkKzobaUsĐaayRồvi]kGvsOt.mcygz.me~XànkĐiejuNkặlMơộtnqaLTircvjB",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_786",
+      "category": "DAILY_CONVERSATION",
+      "gold_label": 0,
+      "message": "[TB] Chuc mung Quy khach da dang ky thanh cong goi ST5KM tren ung dung My Viettel ngay [DATE] va duoc tang 04 ma uu dai de su dung dich vu GrabBike, GrabCar va GrabFood. Quy khach truy cap link https://grb.to/VIETTEL_SV_24 de nhan uu dai. Chuong trinh co the ket thuc som hon du kien do so luong uu dai co han. Chi tiet LH 198 ([MONEY]). Tran trong!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_788",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Tien ich Loi nhan thoai cua Viettel: Quy khach co loi nhan tu TB [NUMBER] vao luc [TIME] [DATE]. Voi noi dung: Thông báo quan trọng về việc thực hiện xin các học sinh, quý khách đừng vội tắt máy từ ngày một tháng một năm hai không hai mươi năm nếu quý khách không xác thực căn cước công dân bằng xin các học MoMo của quý khách sẽ không thực hiện được giao dịch thanh toán hoá đơn hoặc thanh toán dư nợ. Điều này sẽ làm ảnh hưởng xấu đến lịch sử tín dụng của quý khách. Hãy truy cập ngay vào App MoMo vận chuyển, cập nhật sinh trắc học theo hướng dẫn, vui lòng bỏ qua nếu như mình khách đã thực hiện sinh trắc học xin cảm ơn!. De nghe loi nhan thoai, vui long bam goi [NUMBER] (mien phi).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_789",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Đổi mới y tế số, hãy sử dụng Sổ sức khỏe điện tử tích hợp trên VNeID cấp độ 2 để tiện lợi quản lý thông tin sức khỏe cá nhân, tra cứu hồ sơ khám bệnh và tiết kiệm thời gian khi đi khám bệnh.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_804",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Cam on Quy Khach da su dung dich vu Mobile cua Viettel. Viettel kinh tang Quy khach Voucher giam 20% tren tong hoa don mua hang tren he sinh thai Viettel++, su dung tai Gau bong Bemori, ma uu dai la 7PKWU2. Han su dung [NUMBER] [TIME]. De lua chon cac uu dai hap dan khac, vui long truy cap https://myvt.page.link/vt10. Chi tiet LH [NUMBER] (mien phi).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_812",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Viettel thong bao: Quy khach da duoc lap hoa don so K24TVA3506248, ngay lap [DATE], so tien [MONEY]. Quy khach co the tra cuu hoa don dien tu tai http://www.vietteltelecom.vn/hdbh theo ma so bi mat DBKPA3F5HL.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_834",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] Thực hiện thủ tục cấp Phiếu lý lịch tư pháp trên ứng dụng VNeID - Nhanh chóng, tiết kiệm, hiệu quả.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_840",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[QC] SIM kèm gói data - Giải pháp tiết kiệm cho Khách hàng sử dụng nhiều lưu lượng data. Giá SIM [MONEY], gói cước đi kèm SIM chỉ từ [MONEY]/tháng:\n1. SD70: [MONEY]/30 ngày có 30GB (1GB/ngày)\n2. 6SD120: [MONEY]/180 ngày có 360GB (2GB/ngày)\n3. 12SD135: [MONEY]/360 ngày có 1.800GB (5GB/ngày)\nGói cước gia hạn khi hết chu kỳ. Đăng ký tại https://viettel.vn/simdata. LH 198 ([MONEY]). Từ chối QC, soạn TC3 gửi 199.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_846",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] TẾT 5G - NẠP THẺ ĐỦ ĐẦY - DATA XÀI NGAY!\nTặng 20% giá trị tất cả thẻ nạp vào tài khoản viễn thông trong ngày [DATE]. Tiền KM sử dụng truy cập Internet trong 15 ngày. Nạp thẻ online tại các ví điện tử, ứng dụng thanh toán hoặc tại https://viettel.vn/naptienkm . Chi tiết gọi 197 bấm phím 19 ([MONEY]). Trân trọng.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_890",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "^xRqiTthhủưỏởnnggPphọọnnggBbaăoọTttámmChhínnNnghHìjjnN<ldknZ1qzv.djzalo.me<TthằầnntTằàiịđĐếểnnXEYeCg",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_935",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "Ban co [MONEY] qua Nap Dien Thoai & [MONEY] qua khac trong MoMo, het han 30/4. Mo Vi > UU DAI > QUA CUA TOI dung ngay!",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_936",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[TB] NẠP THẺ TẶNG TIỀN - DÙNG LIỀN DATA!\nTặng 20% giá trị tất cả thẻ nạp vào tài khoản viễn thông trong ngày 26/04. Tiền KM sử dụng TRUY CẬP INTERNET trong 15 ngày.\nNạp thẻ online tại các ví điện tử, ứng dụng thanh toán hoặc tại https://viettel.vn/naptienkm .\nCT dành riêng cho Quý khách. LH 198 ([MONEY]).",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_951",
+      "category": "BILLING_UTILITY",
+      "gold_label": 0,
+      "message": "Nhap ma OTP 6286 de xac thuc Dang nhap tren ung dung My Viettel. Ma OTP se het han sau 5p. Chi tiet LH [NUMBER] ([MONEY]) hoac truy cap https://viettel.vn/app. De dam bao an toan cho tai khoan cua Quy khach, vui long khong chia se ma xac thuc nay voi bat ky ai.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "COM_961",
+      "category": "BRAND_PROMO_VOUCHER",
+      "gold_label": 0,
+      "message": "[QC] TRANG BỊ MIỄN PHÍ 04 CAMERA TRONG NHÀ khi Khách hàng Internet Viettel đăng ký DV Home Camera: Phí lắp đặt chỉ từ [MONEY]/camera, lưu trữ Cloud chỉ từ [MONEY]/tháng/camera. Truy cập https://www.viettel.vn/camera hoặc LH [NUMBER] ([MONEY]) để biết chi tiết và đăng ký DV. Từ chối QC, soạn TC3 gửi 199.",
+      "source": "vietnamese_sms_dataset"
+    },
+    {
+      "message_id": "TE_041",
+      "category": "SCAM_SAMPLES_HARD",
+      "gold_label": 1,
+      "message": "Thong bao phat: Ban se khong the gia han giay phep lai xe hoac xe hoi neu thong bao nay chua duoc thanh toan. Xem chi tiet hoac thanh toan: gov dichvucongvn.com",
+      "source": "vietnamese_sms_dataset"
+    }
+  ]
+}

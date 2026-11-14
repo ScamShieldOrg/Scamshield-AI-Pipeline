@@ -1,0 +1,145 @@
+{
+  "fps_total": 38,
+  "fps_low_conf_auto_escalate_count": 21,
+  "fps_high_conf_fastpath_count": 17,
+  "fps_high_samples": [
+    {
+      "message_id": "COM_2488",
+      "confidence": 0.9107,
+      "scam_prob": 0.9107,
+      "matched_cues": [],
+      "message": "Mã WhatsApp của bạn: 302-610 \nĐừng cho ai biết mã này"
+    },
+    {
+      "message_id": "COM_2854",
+      "confidence": 0.9543,
+      "scam_prob": 0.9543,
+      "matched_cues": [],
+      "message": "Xác nhận tạo mã dự phòng Steam: [NUMBER]"
+    },
+    {
+      "message_id": "COM_2528",
+      "confidence": 0.9501,
+      "scam_prob": 0.9501,
+      "matched_cues": [
+        "HamPattern[KHONG chia se]",
+        "SocialEmergencyCue[ngay]"
+      ],
+      "message": "<#> Theo yeu cau cua ban, day la mat ma Traveloka: [NUMBER]. Luu y KHONG chia se ma nay ngay ca voi TRAVELOKA va doi tac cua chung toi. 15c4UgBqz2H"
+    },
+    {
+      "message_id": "COM_824",
+      "confidence": 0.9324,
+      "scam_prob": 0.9324,
+      "matched_cues": [],
+      "message": "Có đơn tiktok nha thắng"
+    },
+    {
+      "message_id": "COM_110",
+      "confidence": 0.938,
+      "scam_prob": 0.938,
+      "matched_cues": [
+        "HamPattern[Ma OTP]",
+        "HamPattern[Quy khach]",
+        "HamPattern[So tien: [MONEY]]"
+      ],
+      "message": "Quy khach dang thuc hien\nThanh toan QR\nNguoi nhan: HAMBURGERHAPI \nSo tien: [MONEY]\nMa OTP: 705755 hieu luc [TIME]"
+    },
+    {
+      "message_id": "COM_2178",
+      "confidence": 0.9245,
+      "scam_prob": 0.9245,
+      "matched_cues": [
+        "HamPattern[Quy khach]",
+        "SocialEmergencyCue[ngay]"
+      ],
+      "message": "Prudential thong bao da xu ly xong yeu cau chuyen khoan [MONEY] cua Ho so/Hop dong [NUMBER] vao ngay [DATE]. Quy khach vui long theo doi tai khoan nguoi thu huong. Thoi gian hoan tat giao dich phu thuoc ngan hang thu huong. Tran trong"
+    },
+    {
+      "message_id": "COM_2573",
+      "confidence": 0.955,
+      "scam_prob": 0.955,
+      "matched_cues": [],
+      "message": "Trẻ em cần được học bơi và học kỹ năng an toàn để phòng, chống đuối nước."
+    },
+    {
+      "message_id": "COM_2953",
+      "confidence": 0.9395,
+      "scam_prob": 0.9395,
+      "matched_cues": [],
+      "message": "Cam on ban da tin dung Coc Coc. Duoi day la link tai [NAME] ma ban yeu cau: https://coccoc.com/app"
+    },
+    {
+      "message_id": "COM_2575",
+      "confidence": 0.9741,
+      "scam_prob": 0.9741,
+      "matched_cues": [
+        "ScamPattern[ma túy]"
+      ],
+      "message": "Toàn dân tích cực hưởng ứng tham gia cuộc thi Tìm hiểu Luật Phòng, chống ma túy. Thông tin chi tiết truy cập địa chỉ: https://thitimhieuluatphongchongmatuy.vn"
+    },
+    {
+      "message_id": "COM_1189",
+      "confidence": 0.9682,
+      "scam_prob": 0.9682,
+      "matched_cues": [
+        "SocialEmergencyCue[ngay]"
+      ],
+      "message": "888TO tai app nhan ngay [MONEY]~[MONEY],phat qua khung [NUMBER] ty.combo thuong khung [MONEY],Nhan thuong ngay tai https://ads888to44.com/?cid=[NUMBER]"
+    },
+    {
+      "message_id": "COM_990",
+      "confidence": 0.963,
+      "scam_prob": 0.963,
+      "matched_cues": [],
+      "message": "<#> Mã WhatsApp của bạn: 672-500\nĐừng cho ai biết mã này\n4sgLq1p5sV6"
+    },
+    {
+      "message_id": "COM_765",
+      "confidence": 0.9388,
+      "scam_prob": 0.9388,
+      "matched_cues": [],
+      "message": "A ơi a xử lý nhanh giúp e được không ạ"
+    },
+    {
+      "message_id": "COM_2615",
+      "confidence": 0.972,
+      "scam_prob": 0.972,
+      "matched_cues": [
+        "SocialEmergencyCue[ngay]"
+      ],
+      "message": "Ahamove tang rieng ban ma HIAHA tiet kiem ngay [MONEY] cho 2 don hang dau tien, dat don ngay tai https://ahamove.onelink.me/fmLb/5huavlai"
+    },
+    {
+      "message_id": "COM_611",
+      "confidence": 0.973,
+      "scam_prob": 0.973,
+      "matched_cues": [],
+      "message": "Thông báo: Đồng bào, đồng chí cả nước có thể gửi lời chia buồn đến gia đình đồng chí Tổng Bí thư [NAME] trên Sổ tang điện tử của ứng dụng VNeID mức độ 2."
+    },
+    {
+      "message_id": "COM_2543",
+      "confidence": 0.9528,
+      "scam_prob": 0.9528,
+      "matched_cues": [],
+      "message": "Ma Tinder của bạn là [NUMBER] Đừng chia sẻ thông tin này"
+    },
+    {
+      "message_id": "COM_2413",
+      "confidence": 0.9431,
+      "scam_prob": 0.9431,
+      "matched_cues": [],
+      "message": "Your password for Google Account drtai789@gmail.com was found in a non-Google data breach. Change your password now."
+    },
+    {
+      "message_id": "COM_1050",
+      "confidence": 0.9741,
+      "scam_prob": 0.9741,
+      "matched_cues": [
+        "HamPattern[mã OTP]",
+        "HamPattern[cô]"
+      ],
+      "message": "[CẢNH BÁO] Cục An ninh mạng và Phòng, chống tội phạm sử dụng công nghệ cao cảnh báo: Xuất hiện tình trạng lừa đảo, giả mạo lực lượng chức năng xã/phường... thông báo về việc sắp xếp đơn vị hành chính mới trên cả nước. Các đối tượng yêu cầu người dân truy cập đường dẫn hoặc cài ứng dụng VNeID giả mạo chứa mã độc, dụ dỗ người dân để lấy mã OTP tài khoản ngân hàng hoặc dữ liệu sinh trắc học nhằm chiếm đoạt tài sản. Người dân cần cảnh giác, không làm theo các yêu cầu qua điện thoại, chỉ thực hiện cập nhật thông tin trực tiếp tại Công an xã/phường nơi sinh sống; trình báo đến cơ quan Công an nơi gần nhất để được hướng dẫn."
+    }
+  ]
+}
