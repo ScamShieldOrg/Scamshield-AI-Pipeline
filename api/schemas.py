@@ -75,6 +75,8 @@ class ScanResultData(BaseModel):
     council_breakdown: Optional[CouncilBreakdown] = None
     actionable_recommendations: List[str] = []
     telemetry: Optional[Dict[str, Any]] = None
+    council_deliberation: Optional[Dict[str, Any]] = None
+    deterministic_features: Optional[Dict[str, Any]] = None
 
 
 class StandardScanResponse(BaseModel):

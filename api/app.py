@@ -32,6 +32,7 @@ if ROOT_DIR not in sys.path:
 load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 from pipeline.two_tier_router import TwoTierRouter
+from pipeline.deterministic_features import extract_deterministic_features
 from pipeline.verdict_contract import normalize_verdict
 from pipeline.tier2_cache import Tier2CacheManager
 from api.visobert_app import router as visobert_router
@@ -159,26 +160,34 @@ def health_check():
     )
 
 
-def _compute_radar_metrics(message: str, is_scam: bool, raw_res: Dict[str, Any]) -> RadarMetrics:
-    """Computes explainable radar dimensions for frontend radar chart."""
-    msg_lower = message.lower()
+def _compute_radar_metrics(message: str, is_scam: bool, raw_res: Dict[str, Any], deterministic: Dict[str, Any] = None) -> RadarMetrics:
+    """Tính toán 5 trục radar rủi ro từ các tín hiệu trích xuất định lượng (cues, URLs, PII)."""
+    det = deterministic or {}
+    msg_lower = (message or "").lower()
 
-    urgency = 15
-    authority = 15
-    financial = 15
-    channel = 15
-    data_harvest = 10
+    urgency_score = float(det.get("urgency_indicators", {}).get("urgency_score", 15.0 if is_scam else 5.0))
+    has_urls = len(det.get("url_analysis", {}).get("detected_urls", [])) > 0
+    is_whitelist = det.get("url_analysis", {}).get("is_in_official_whitelist", True)
+    has_otp = det.get("otp_structure", {}).get("has_otp_pattern", False)
+    brand_identity = det.get("brand_identity", {})
+    has_brand = brand_identity.get("is_registered_brand", False) or any(b in msg_lower for b in ["vietcombank", "bidv", "mbbank", "techcombank", "vcb", "agribank", "tpbank", "vpbank"])
 
-    if any(k in msg_lower for k in ["khẩn", "ngay", "24h", "khoá", "bị khóa", "hết hạn", "trước khi"]):
-        urgency += 55
-    if any(k in msg_lower for k in ["công an", "viện kiểm sát", "bộ công an", "vietcombank", "mb bank", "thuế"]):
-        authority += 60
-    if any(k in msg_lower for k in ["trúng thưởng", "tri ân", "tặng quà", "hoa hồng", "việc làm", "vnd", "tiền"]):
-        financial += 55
-    if any(k in msg_lower for k in ["zalo", "telegram", "inbox", "link", "nhấp vào", "http", ".xyz", ".top"]):
-        channel += 55
-    if any(k in msg_lower for k in ["otp", "mật khẩu", "cccd", "số tài khoản", "sinh trắc", "đăng nhập", "xác minh"]):
-        data_harvest += 60
+    # 1. Urgency: Dựa trên urgency_score và từ khóa khẩn cấp
+    urgency = min(100, int(urgency_score + (35 if any(kw in msg_lower for kw in ["24h", "khóa", "ngay", "khẩn", "hết hạn", "trước khi"]) else 0)))
+
+    # 2. Authority Impersonation: Mạo danh cơ quan / ngân hàng
+    authority = 85 if (has_brand and not is_whitelist and has_urls) else (70 if has_brand and is_scam else (40 if has_brand else (15 if is_scam else 5)))
+
+    # 3. Financial Lure: Bẫy tài chính, quà tặng, thưởng
+    has_lure_words = any(kw in msg_lower for kw in ["trúng thưởng", "tri ân", "tặng quà", "hoa hồng", "việc làm", "vnd", "tiền", "lì xì", "giftcode", "tặng code"])
+    financial = 80 if has_lure_words else (30 if is_scam else 10)
+
+    # 4. Suspicious Channel: Kênh tiếp cận đáng ngờ (URL không whitelist, domain lạ, shortlink)
+    channel = 85 if (has_urls and not is_whitelist) else (35 if has_urls else (20 if is_scam else 5))
+
+    # 5. Data Harvesting: Đòi hỏi thông tin nhạy cảm, OTP, sinh trắc học
+    has_harvest_words = has_otp or any(kw in msg_lower for kw in ["otp", "mật khẩu", "cccd", "số tài khoản", "sinh trắc", "đăng nhập", "xác minh"])
+    data_harvest = 90 if (has_harvest_words and is_scam) else (40 if has_harvest_words else (15 if is_scam else 5))
 
     if not is_scam:
         urgency = min(urgency, 30)
@@ -284,9 +293,9 @@ def scan_message(req: ScanRequest):
             raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
         except Exception as e:
             logger.error(f"Inference error during scan: {e}", exc_info=True)
-            return StandardScanResponse(
-                status="error",
-                error=f"Model inference failed: {str(e)}",
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"status": "error", "data": None, "error": f"Model inference failed: {str(e)}"},
             )
         
         # GĐ5: Lưu kết quả Tier 2 thành công vào Cache
@@ -410,7 +419,8 @@ def scan_message(req: ScanRequest):
         evidence=evidence,
     )
 
-    radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res)
+    deterministic_features = extract_deterministic_features(content_to_scan, req.sender)
+    radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res, deterministic=deterministic_features)
     recommendations = _build_recommendations(content_to_scan, is_scam, risk_level)
 
     result_data = ScanResultData(
@@ -421,6 +431,8 @@ def scan_message(req: ScanRequest):
         radar_metrics=radar,
         council_breakdown=council_breakdown,
         actionable_recommendations=recommendations,
+        council_deliberation=raw_res.get("council_deliberation"),
+        deterministic_features=deterministic_features,
         telemetry={
             "routing_path": raw_res.get("routing_path"),
             "routing_reason": raw_res.get("routing_reason"),

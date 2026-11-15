@@ -189,7 +189,21 @@ class TwoTierRouter:
                 "final_confidence": t1_confidence,
                 "is_scam": (standardized_t1_label == "SCAM-RISK"),
                 "is_unknown": False,
-                "scam_type": ("Cảnh báo rủi ro lừa đảo (ViSoBERT Tier 1)" if standardized_t1_label == "SCAM-RISK" else "Nội dung an toàn / độ tin cậy cao"),
+                "scam_type": (
+                    (
+                        "Dấu hiệu tin nhắn rác & Dụ dỗ nhận thưởng trái phép"
+                        if any(kw in message.lower() for kw in ["tặng code", "giftcode", "cược", "game bai", "khuyến mãi", "tri ân"])
+                        else "Mạo danh liên kết ngân hàng & Đe dọa khóa tài khoản"
+                        if any(kw in message.lower() for kw in ["vietcombank", "bidv", "mbbank", "techcombank", "vcb", "tài khoản", "khóa thẻ"])
+                        else "Dấu hiệu thao túng tâm lý & Mạo danh người quen mượn tiền"
+                        if any(kw in message.lower() for kw in ["mượn tiền", "cấp cứu", "bệnh viện", "tai nạn", "chuyển khoản gấp"])
+                        else "Dấu hiệu tin nhắn rác & Dẫn dụ truy cập liên kết lạ"
+                        if ("http" in message.lower() or any(tld in message.lower() for tld in [".xyz", ".top", ".vip", ".shop", ".online"]))
+                        else "Dấu hiệu tin nhắn rác & Lừa đảo dụ dỗ người dùng"
+                    )
+                    if standardized_t1_label == "SCAM-RISK"
+                    else "Thông báo dịch vụ & Xác minh an toàn"
+                ),
                 "risk_level": "HIGH" if standardized_t1_label == "SCAM-RISK" else "LOW",
                 "explanation": f"Xử lý trực tiếp tại thiết bị với độ tự tin {t1_confidence*100:.1f}% >= {self.tau*100:.0f}%.",
                 "routing_path": "TIER_1_DIRECT_FASTPATH",
@@ -262,6 +276,7 @@ class TwoTierRouter:
                         "specialist_votes": council_res["specialist_votes"],
                         "rag": rag_meta,
                     },
+                    "council_deliberation": council_res.get("council_deliberation"),
                     "total_latency_ms": round(total_elapsed_ms, 2),
                     "total_cost_usd": council_res["estimated_council_cost_usd"],
                     "escalated": True,
@@ -275,8 +290,9 @@ class TwoTierRouter:
         )
         logger.info(f"Escalating message to Tier 2 Single Cloud LLM. Reason: {fallback_trigger}")
 
-        fallback_prompt = (f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{message}"
-                           f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}")
+        fallback_prompt = (f"Hãy phân tích tin nhắn sau và đối chiếu bằng chứng URL:\n\n{tier2_input.message}"
+                           f"\n\nBằng chứng URL: {json.dumps(tier2_url_evidence, ensure_ascii=False)}"
+                           f"\n\n{rag_prompt}")
         log_tier2_prompt(logger, stage="registry_fallback", system_prompt=SYSTEM_PROMPT_TIER_2,
                          user_prompt=fallback_prompt)
         t2_response = self.tier2_registry.generate_content(
@@ -341,6 +357,7 @@ class TwoTierRouter:
                         "fallback_trigger": fallback_trigger,
                         "rag": rag_meta,
                     },
+                    "council_deliberation": None,
                     "total_latency_ms": round(total_elapsed_ms, 2),
                     "total_cost_usd": estimated_cost,
                     "escalated": True,

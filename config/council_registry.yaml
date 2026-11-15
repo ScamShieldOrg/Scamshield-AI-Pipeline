@@ -144,7 +144,9 @@ consensus_rules:
   unanimous_scam_threshold: 0.85    # Score >= 0.85 -> CRITICAL Risk
   suspected_scam_threshold: 0.60    # Score >= 0.60 -> HIGH Risk
   ham_threshold: 0.40               # Score < 0.40 -> LOW Risk
-  public_defender_veto_boost: 0.25  # Subtracted from scam score if Defender strongly asserts legitimacy with valid protocol
+  public_defender_veto_boost: 0.15  # Subtracted from scam score if Defender strongly asserts legitimacy with valid protocol
+  public_defender_max_veto: 0.15    # Hard cap on Public Defender downward adjustment
+  public_defender_min_confidence: 0.70  # Minimum confidence required for defender veto
   unknown_triggers:
     vote_contradiction_enabled: true
     min_supermajority_margin: 2

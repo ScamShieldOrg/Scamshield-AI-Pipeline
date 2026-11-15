@@ -20,6 +20,9 @@ if ROOT_DIR not in sys.path:
 @pytest.fixture(autouse=True)
 def mock_db_persistence_in_tests():
     """Mock database persistence during unit tests so offline test runner does not require live Postgres."""
+    from api.app import cache_manager
+    cache_manager._memory_cache.clear()
     with patch("api.app.save_scan") as mock_save_scan, \
          patch("api.visobert_app.save_prediction") as mock_save_pred:
         yield
+    cache_manager._memory_cache.clear()
