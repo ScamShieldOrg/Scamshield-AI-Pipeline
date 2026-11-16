@@ -44,7 +44,11 @@ docker compose up -d --build
 
 Điền khóa dịch vụ cần sử dụng trong `.env` và đổi `POSTGRES_PASSWORD` khi chạy ngoài máy phát triển. Compose khởi động PostgreSQL cùng API tại `http://localhost:8000`; tài liệu tương tác ở `http://localhost:8000/docs`. Lần khởi động đầu có thể cần tải BGE-M3.
 
-Để chạy API trực tiếp, đặt `DATABASE_URL` trỏ tới PostgreSQL có pgvector, kích hoạt môi trường Python của bạn, rồi chạy:
+
+Đặt cùng giá trị vừa in ra vào `AI_SERVICE_TOKEN` ở `.env` này và `SCAM_CHECK_AI_TOKEN` ở `.env` của backend. AI service không khởi động nếu token rỗng. Gửi `Authorization: Bearer <token>` tới cả ba endpoint inference; `/health` vẫn truy cập được không cần token. Không lưu token trong frontend hoặc ứng dụng di động. Chỉ dùng HTTP loopback khi phát triển trên cùng máy. Trong triển khai, kết thúc TLS bằng chứng chỉ hợp lệ trước AI service, giới hạn truy cập trực tiếp vào cổng HTTP nội bộ và đặt `SCAM_CHECK_AI_BASE_URL` của backend thành địa chỉ HTTPS. Cập nhật hai secret cùng lúc khi xoay token và khởi động lại hai dịch vụ.
+
+
+Để chạy API trực tiếp, đặt `DATABASE_URL` trỏ tới PostgreSQL có pgvector, kích hoạt môi trường Python, rồi chạy:
 
 ```bash
 python -m pip install -r requirements.txt
