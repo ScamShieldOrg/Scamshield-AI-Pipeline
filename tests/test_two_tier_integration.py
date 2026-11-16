@@ -18,7 +18,7 @@ from pipeline.two_tier_router import TwoTierRouter
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": "Bearer test-service-token"})
 
 
 def test_tier1_fastpath_direct_exit_ham():
