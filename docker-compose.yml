@@ -33,6 +33,7 @@ services:
         required: false
     environment:
       PORT: 8000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN in .env}
       HOST: 0.0.0.0
       TIER1_CONFIDENCE_THRESHOLD: ${TIER1_CONFIDENCE_THRESHOLD:-0.90}
       USE_COUNCIL: ${USE_COUNCIL:-true}

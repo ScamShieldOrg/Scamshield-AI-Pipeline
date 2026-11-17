@@ -44,7 +44,7 @@ def scan_stack(monkeypatch):
         "tier": "lite", "model_used": "test-model", "latency_ms": 2,
     }
     monkeypatch.setattr(api, "router_instance", router)
-    return TestClient(api.app), router, provider
+    return TestClient(api.app, headers={"Authorization": "Bearer test-service-token"}), router, provider
 
 
 @pytest.mark.parametrize("with_url", [False, True])
@@ -181,7 +181,7 @@ def test_scan_inference_error_returns_500(scan_stack, content, check_type):
 def test_scan_uninitialized_returns_503(monkeypatch):
     monkeypatch.setattr(api, "router_instance", None)
     monkeypatch.setattr(api, "startup_event", lambda: None)
-    response = TestClient(api.app).post("/api/v1/scan", json={"content": "Tin nhan", "check_type": "SMS"})
+    response = TestClient(api.app, headers={"Authorization": "Bearer test-service-token"}).post("/api/v1/scan", json={"content": "Tin nhan", "check_type": "SMS"})
     assert response.status_code == 503
 
 

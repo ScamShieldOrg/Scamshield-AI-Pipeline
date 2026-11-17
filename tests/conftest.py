@@ -8,6 +8,7 @@ os.environ["GEMINI_API_KEY"] = ""
 os.environ["GOOGLE_API_KEY"] = ""
 os.environ["SAFE_BROWSING_API_KEY"] = ""
 os.environ["OPENAI_API_KEY"] = ""
+os.environ["AI_SERVICE_TOKEN"] = "test-service-token"
 
 import pytest
 from unittest.mock import patch

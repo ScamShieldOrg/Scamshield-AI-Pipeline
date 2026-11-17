@@ -14,7 +14,7 @@ from api.app import app, startup_event
 
 # Run startup hook
 startup_event()
-client = TestClient(app)
+client = TestClient(app, headers={"Authorization": "Bearer test-service-token"})
 
 
 def test_health_check():

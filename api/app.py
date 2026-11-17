@@ -4,7 +4,7 @@ ScamShield-VN: AI Pipeline Microservice (FastAPI REST Service)
 ==============================================================================
 Provides decoupled RESTful AI inference endpoints for:
 - Spring Boot Backend Service (REST Client)
-- Mobile App & Web Frontend (Direct / Dev testing)
+- Authenticated backend integration
 - Automated Microservice Health & Monitoring
 ==============================================================================
 """
@@ -19,8 +19,9 @@ import re
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
@@ -69,6 +70,47 @@ app = FastAPI(
 # fine-tuned ViSoBERT checkpoint (models/visobert_finetuned/).
 app.include_router(visobert_router)
 
+PROTECTED_PATHS = frozenset({"/api/v1/scan", "/api/v1/scan/raw", "/api/v1/visobert/predict"})
+
+
+def service_openapi():
+    """Describe the middleware's bearer requirement in Swagger UI."""
+    if app.openapi_schema is None:
+        schema = get_openapi(title=app.title, version=app.version,
+                             description=app.description, routes=app.routes)
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})["ServiceBearer"] = {
+            "type": "http",
+            "scheme": "bearer",
+            "description": "AI_SERVICE_TOKEN shared with the backend (enter the token only).",
+        }
+        for path in PROTECTED_PATHS:
+            operation = schema["paths"][path]["post"]
+            operation["security"] = [{"ServiceBearer": []}]
+            operation.setdefault("responses", {})["401"] = {
+                "description": "Missing or invalid service token",
+            }
+        app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = service_openapi
+
+
+@app.middleware("http")
+async def require_service_token(request: Request, call_next):
+    if request.url.path in PROTECTED_PATHS:
+        expected = os.getenv("AI_SERVICE_TOKEN", "")
+        authorization_headers = request.headers.getlist("authorization")
+        supplied = authorization_headers[0] if len(authorization_headers) == 1 else ""
+        prefix = "Bearer "
+        valid = (bool(expected.strip()) and supplied.startswith(prefix)
+                 and bool(supplied[len(prefix):])
+                 and hmac.compare_digest(supplied[len(prefix):], expected))
+        if not valid:
+            logger.warning("AI request rejected: path=%s httpStatus=401 errorCode=UNAUTHORIZED", request.url.path)
+            return JSONResponse(status_code=401, content={"error": {"code": "UNAUTHORIZED"}})
+    return await call_next(request)
+
 # Cross-Origin Resource Sharing (CORS) for local frontend & Spring Boot
 app.add_middleware(
     CORSMiddleware,
@@ -95,6 +137,8 @@ def _download_missing_phishtank_feed():
 def startup_event():
     global router_instance, _phishtank_bootstrap_started
 
+    if not os.getenv("AI_SERVICE_TOKEN", "").strip():
+        raise RuntimeError("AI_SERVICE_TOKEN is required")
     if router_instance is not None:
         return
     logger.info("Initializing ScamShield TwoTierRouter...")
