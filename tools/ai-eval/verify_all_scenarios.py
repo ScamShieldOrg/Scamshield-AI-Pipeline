@@ -21,7 +21,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 # Thêm đường dẫn project
-AI_PIPELINE_DIR = Path(r"C:\Users\USER\Scamshield-AI-Pipeline")
+AI_PIPELINE_DIR = Path(__file__).resolve().parents[2]
 if str(AI_PIPELINE_DIR) not in sys.path:
     sys.path.insert(0, str(AI_PIPELINE_DIR))
 

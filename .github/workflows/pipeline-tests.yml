@@ -38,4 +38,4 @@ jobs:
           RAG_ENABLED: "false"
           TIER2_CACHE_ENABLED: "false"
         run: |
-          pytest -v
+          pytest tests -v

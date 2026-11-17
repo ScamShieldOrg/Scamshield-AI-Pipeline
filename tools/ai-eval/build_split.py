@@ -22,7 +22,8 @@ import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
-DEFAULT_SOURCE = Path(r"C:\Users\USER\Scamshield-AI-Pipeline\data\raw\vietnamese_sms_merged_all.csv")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_SOURCE = ROOT_DIR / "data" / "raw" / "vietnamese_sms_merged_all.csv"
 OUT_DIR = Path(__file__).resolve().parent / "out"
 
 PLACEHOLDER_RE = re.compile(r"\[(?:number|money|time|date|point|otp|email|url)\]", re.IGNORECASE)

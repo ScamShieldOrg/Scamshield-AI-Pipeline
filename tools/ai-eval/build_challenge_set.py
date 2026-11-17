@@ -22,7 +22,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-SOURCE = Path(r"C:\Users\USER\Scamshield-AI-Pipeline\data\raw\vietnamese_sms_merged_all.csv")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+SOURCE = ROOT_DIR / "data" / "raw" / "vietnamese_sms_merged_all.csv"
 OUT_FILE = Path(__file__).resolve().parent / "out" / "challenge_set_v1.json"
 
 gambling_re = re.compile(r"(?:tai app|nohu|nohuvip|bet|game bai|tang tien|thuong khung|phat qua|daga|888|banca|game|trian|nhan ngay)", re.IGNORECASE)

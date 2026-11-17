@@ -29,11 +29,10 @@ import scipy.stats as stats
 
 # Setup paths
 ROOT_DIR = Path(__file__).resolve().parents[2]
-PIPELINE_DIR = Path(r"C:\Users\USER\Scamshield-AI-Pipeline")
-if str(PIPELINE_DIR) not in sys.path:
-    sys.path.insert(0, str(PIPELINE_DIR))
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-load_dotenv(PIPELINE_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env")
 
 from pipeline.local_classifier import LocalViSoBERTClassifier
 from pipeline.forensic_council import ForensicCouncil
