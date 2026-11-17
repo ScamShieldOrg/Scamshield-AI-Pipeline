@@ -66,6 +66,28 @@ def test_visobert_direct_endpoint():
     assert "latency_ms" in data
 
 
+
+
+def test_scan_with_sms_check_type_contract():
+    """Verify GĐ1: Core Spring Boot sends check_type='SMS' and API successfully accepts it."""
+    payload = {
+        "content": "[QC] Mua data 5G nhan ngay voucher giam 50k tai Shopee.",
+        "check_type": "SMS"
+    }
+    response = client.post("/api/v1/scan", json=payload)
+    assert response.status_code == 200
+    res = response.json()
+    assert res["status"] == "success"
+    v = res["data"]["verdict"]
+    assert "analysis_status" in v
+    assert "warning_level" in v
+    assert "model_score" in v
+    assert "decided_by" in v
+    assert v["analysis_status"] == "OK"
+    assert v["decided_by"] in ["TIER1", "COUNCIL", "CLOUD"]
+    if v["risk_score"] < 70.0:
+        assert v["risk_score"] != 88.5
+
 if __name__ == "__main__":
     test_health_check()
     test_scan_tier1_fastpath_scam()

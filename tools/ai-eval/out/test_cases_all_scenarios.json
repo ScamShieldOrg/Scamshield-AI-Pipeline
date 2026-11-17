@@ -1,0 +1,171 @@
+[
+  {
+    "scenario_id": "TC_01_SMS_CONTRACT",
+    "group": "GĐ1: Chuẩn hóa Hợp đồng API",
+    "description": "Kiểm tra API chấp nhận check_type='SMS' theo đúng chuẩn Core Spring Boot gửi sang",
+    "input": {
+      "content": "Ma OTP xac thuc giao dich cua ban la 983120. Hieu luc trong 3 phut.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "status_code": 200,
+      "analysis_status": "COMPLETED",
+      "check_type_echo": "SMS"
+    },
+    "why_needed": "Trước đây check_type chỉ nhận 'TEXT', khiến Spring Boot Core gửi 'SMS' bị lỗi 422 Unprocessable Entity."
+  },
+  {
+    "scenario_id": "TC_02_NO_FAKE_BOOST_RAW_SCORE",
+    "group": "GĐ1: Tính trung thực của Điểm số",
+    "description": "Kiểm tra loại bỏ hoàn toàn công thức nâng điểm giả tạo 88.5 + prob * 11.4",
+    "input": {
+      "content": "Thong bao lich cat dien dinh ky khu vuc phuong 5 quan 3 tu 8h den 12h ngay mai.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "no_score_88_floor": true,
+      "model_score_equals_prob_times_100": true
+    },
+    "why_needed": "Trước đây bất kỳ tin nhắn nào có nguy cơ nhẹ (vd 10-30%) đều bị ép nhảy vọt lên 88.5 - 92 điểm gây hoang mang giả tạo."
+  },
+  {
+    "scenario_id": "TC_03_SERVICE_ERROR_UNVERIFIED",
+    "group": "GĐ1: Bất biến Cảnh báo khi Lỗi",
+    "description": "Khi mô hình lỗi hoặc suy thoái (degraded), warning_level bắt buộc phải là UNVERIFIED, cấm trả NONE",
+    "input": {
+      "content": "Tin nhan test tinh huong he thong loi ngoai le",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "analysis_status": "MODEL_UNAVAILABLE",
+      "warning_level": "UNVERIFIED",
+      "forbidden_warning_level": "NONE"
+    },
+    "why_needed": "Trước đây khi AI service gặp ngoại lệ, hệ thống trả warning_level: NONE làm người dùng hiểu nhầm là an toàn tuyệt đối."
+  },
+  {
+    "scenario_id": "TC_04_DE_TEMPLATIZE_CONTENT_CLASS",
+    "group": "GĐ1: Loại bỏ Template gán cứng",
+    "description": "Không gán cứng nhãn 'Mạo danh tổ chức tài chính/ngân hàng để chiếm đoạt tài sản' cho tin không liên quan",
+    "input": {
+      "content": "Chuc mung ban da trung thuong voucher giam 50% tai he thong The Gioi Di Dong, nhan tin NHAN de lay ma.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "forbidden_content_class": "Mạo danh tổ chức tài chính/ngân hàng để chiếm đoạt tài sản"
+    },
+    "why_needed": "Trước đây mọi kết luận đều bị chèn chuỗi 'Mạo danh ngân hàng' dù tin nhắn là quảng cáo, trúng thưởng, hay chat."
+  },
+  {
+    "scenario_id": "TC_05_RECOMMENDATION_FINANCIAL",
+    "group": "GĐ4: Khuyến nghị theo Ngữ cảnh Tài chính",
+    "description": "Tin nhắn có tín hiệu tiền/chuyển khoản kích hoạt khuyến nghị an toàn giao dịch ngân hàng",
+    "input": {
+      "content": "Em dang can gap 5 trieu de dong tien vien phi cho me, anh chuyen vao stk 1903348123 Techcombank giup em voi nhe.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "recommendation_contains": [
+        "chuyển tiền",
+        "xác minh"
+      ]
+    },
+    "why_needed": "Cung cấp chỉ dẫn phòng vệ cụ thể theo hành vi chuyển khoản thay vì đưa lời khuyên chung chung."
+  },
+  {
+    "scenario_id": "TC_06_RECOMMENDATION_LINK",
+    "group": "GĐ4: Khuyến nghị theo Ngữ cảnh Đường link / Tên miền",
+    "description": "Tin nhắn chứa URL lạ kích hoạt khuyến nghị không nhấp liên kết và cảnh báo tên miền",
+    "input": {
+      "content": "Tai khoan VNeID cua ban chua cap nhat du lieu muc 2, vui long truy cap http://dichvucong-quocgia.xyz de bo sung ngay.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "recommendation_contains": [
+        "liên kết",
+        "tên miền"
+      ]
+    },
+    "why_needed": "Cảnh báo trực diện vào nguy cơ lừa đảo click-jacking, phishing qua tên miền giả mạo .xyz."
+  },
+  {
+    "scenario_id": "TC_07_RECOMMENDATION_OTP",
+    "group": "GĐ4: Khuyến nghị theo Ngữ cảnh Mã OTP / Xác thực",
+    "description": "Tin nhắn chứa mã OTP kích hoạt khuyến nghị bảo mật mã bí mật",
+    "input": {
+      "content": "Ma OTP cua ban la 654321 dung de dang nhap Vi MoMo. Nhan vien MoMo khong bao gio hoi ma nay.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "recommendation_contains": [
+        "mã xác thực",
+        "OTP"
+      ]
+    },
+    "why_needed": "Nhắc nhở người dùng nguyên tắc vàng không bao giờ đọc OTP cho bất kỳ ai gọi đến tự xưng nhân viên."
+  },
+  {
+    "scenario_id": "TC_08_TIER1_FASTPATH_DIRECT_EXIT",
+    "group": "GĐ2: Fast-Path Siêu tốc Tier 1 CPU",
+    "description": "Tin nhắn trò chuyện hoàn toàn trong sáng được Tier 1 xử lý dứt điểm dưới 10ms mà không tốn gọi LLM",
+    "input": {
+      "content": "Ma OTP xac thuc giao dich ShopeePay cua ban la 839201. Ma co hieu luc trong 3 phut. Khong chia se cho bat ky ai.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "decided_by": "TIER_1_LOCAL",
+      "warning_level": "SAFE",
+      "max_latency_ms": 20.0
+    },
+    "why_needed": "80.5% tin nhắn độ tự tin cao thoát ngay tại Tier 1 CPU, tiết kiệm chi phí API và đạt SLA thời gian thực."
+  },
+  {
+    "scenario_id": "TC_09_TIER2_COUNCIL_FP_CORRECTION",
+    "group": "GĐ2b: Hội đồng Tier 2 Sửa Báo động giả",
+    "description": "OTP thương hiệu hợp pháp bị Tier 1 gán nhầm SCAM được Hội đồng Tier 2 sửa thành LOW-RISK",
+    "input": {
+      "content": "415516 la ma xac thuc Traveloka cua ban. Ma co hieu luc trong 5 phut. KHONG chia se ma nay cho bat ky ai.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "gold_label": "HAM",
+      "tier1_behavior": "False Positive hoặc rơi vào vùng nghi ngờ",
+      "tier2_final_verdict": "LOW-RISK hoặc SAFE",
+      "public_defender_intervened": true
+    },
+    "why_needed": "Hội đồng Tier 2 với Seat C Public Defender sửa 100% các ca báo động giả trên mã OTP thật, chống mệt mỏi cảnh báo."
+  },
+  {
+    "scenario_id": "TC_10A_TIER2_CACHE_HIT",
+    "group": "GĐ5: Tier 2 Analysis Cache Hit",
+    "description": "Tin nhắn đã được Hội đồng Tier 2 phân tích lần 2 được trả về tức thì từ Cache",
+    "input": {
+      "content": "Thong bao tu Cuc Thue: Ban con no khoan tien phat hanh chinh, lien he 0901234567 de nop phat.",
+      "check_type": "SMS"
+    },
+    "expected": {
+      "cache_status": "CACHE_HIT",
+      "decided_by": "TIER_2_CACHE",
+      "latency_under_5ms": true
+    },
+    "why_needed": "Tránh lãng phí tiền gọi LLM và độ trễ 10s cho các tin nhắn lặp lại nhiều lần từ cộng đồng."
+  },
+  {
+    "scenario_id": "TC_10B_TIER2_CACHE_ANTI_POISONING",
+    "group": "GĐ5: Chống đầu độc Cache khi giả mạo URL",
+    "description": "Kẻ tấn công giữ nguyên nội dung nhưng thay đổi URL độc hại khác sẽ bị Cache Miss (Indicator Set Hash khác nhau)",
+    "input_variant_1": {
+      "content": "TK VCB bi khoa, dang nhap https://vietcombank-login.xyz de mo khoa.",
+      "indicator_url": "https://vietcombank-login.xyz"
+    },
+    "input_variant_2": {
+      "content": "TK VCB bi khoa, dang nhap https://vietcombank-phishing.top de mo khoa.",
+      "indicator_url": "https://vietcombank-phishing.top"
+    },
+    "expected": {
+      "indicator_hash_1_equals_hash_2": false,
+      "cache_poisoning_prevented": true
+    },
+    "why_needed": "Ngăn chặn kẻ tấn công lợi dụng cache của tin nhắn cũ để ngụy trang liên kết lừa đảo mới."
+  }
+]

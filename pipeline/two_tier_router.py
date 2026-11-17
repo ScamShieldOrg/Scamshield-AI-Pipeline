@@ -84,6 +84,7 @@ class TwoTierRouter:
             temperature=tier1_temperature,
             cost_alpha=tier1_cost_alpha,
         )
+        self.url_signals = UrlSignals()
         self.tier2_registry = ModelRegistry(
             api_key=api_key,
             config_path=config_path,
@@ -188,7 +189,21 @@ class TwoTierRouter:
                 "final_confidence": t1_confidence,
                 "is_scam": (standardized_t1_label == "SCAM-RISK"),
                 "is_unknown": False,
-                "scam_type": "Mạo danh liên kết ngân hàng & Đe dọa khóa tài khoản" if standardized_t1_label == "SCAM-RISK" else "Thông báo giao dịch chính danh",
+                "scam_type": (
+                    (
+                        "Dấu hiệu tin nhắn rác & Dụ dỗ nhận thưởng trái phép"
+                        if any(kw in message.lower() for kw in ["tặng code", "giftcode", "cược", "game bai", "khuyến mãi", "tri ân"])
+                        else "Mạo danh liên kết ngân hàng & Đe dọa khóa tài khoản"
+                        if any(kw in message.lower() for kw in ["vietcombank", "bidv", "mbbank", "techcombank", "vcb", "tài khoản", "khóa thẻ"])
+                        else "Dấu hiệu thao túng tâm lý & Mạo danh người quen mượn tiền"
+                        if any(kw in message.lower() for kw in ["mượn tiền", "cấp cứu", "bệnh viện", "tai nạn", "chuyển khoản gấp"])
+                        else "Dấu hiệu tin nhắn rác & Dẫn dụ truy cập liên kết lạ"
+                        if ("http" in message.lower() or any(tld in message.lower() for tld in [".xyz", ".top", ".vip", ".shop", ".online"]))
+                        else "Dấu hiệu tin nhắn rác & Lừa đảo dụ dỗ người dùng"
+                    )
+                    if standardized_t1_label == "SCAM-RISK"
+                    else "Thông báo dịch vụ & Xác minh an toàn"
+                ),
                 "risk_level": "HIGH" if standardized_t1_label == "SCAM-RISK" else "LOW",
                 "explanation": f"Xử lý trực tiếp tại thiết bị với độ tự tin {t1_confidence*100:.1f}% >= {self.tau*100:.0f}%.",
                 "routing_path": "TIER_1_DIRECT_FASTPATH",
@@ -241,7 +256,7 @@ class TwoTierRouter:
                     "final_confidence": council_res["consensus_scam_prob"],
                     "is_scam": (c_label == "SCAM-RISK"),
                     "is_unknown": (c_label == "UNKNOWN"),
-                    "scam_type": "Dấu hiệu thao túng tâm lý & Mạo danh người quen mượn tiền",
+                    "scam_type": council_res.get("scam_type") or ("Dấu hiệu rủi ro lừa đảo (Hội đồng Forensic)" if c_label == "SCAM-RISK" else "Nội dung an toàn (Hội đồng Forensic)"),
                     "risk_level": council_res["risk_level"],
                     "explanation": council_res["unified_rationale"],
                     "routing_path": "TIER_2_FORENSIC_COUNCIL",
@@ -261,6 +276,7 @@ class TwoTierRouter:
                         "specialist_votes": council_res["specialist_votes"],
                         "rag": rag_meta,
                     },
+                    "council_deliberation": council_res.get("council_deliberation"),
                     "total_latency_ms": round(total_elapsed_ms, 2),
                     "total_cost_usd": council_res["estimated_council_cost_usd"],
                     "escalated": True,
@@ -341,6 +357,7 @@ class TwoTierRouter:
                         "fallback_trigger": fallback_trigger,
                         "rag": rag_meta,
                     },
+                    "council_deliberation": None,
                     "total_latency_ms": round(total_elapsed_ms, 2),
                     "total_cost_usd": estimated_cost,
                     "escalated": True,

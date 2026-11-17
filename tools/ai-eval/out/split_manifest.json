@@ -1,0 +1,41 @@
+{
+  "source": "C:\\Users\\USER\\Scamshield-AI-Pipeline\\data\\raw\\vietnamese_sms_merged_all.csv",
+  "source_sha256": "a468779de45f9d77b7187c828c6d5ac14a801c10b4022853bbc14845573d76e5",
+  "algorithm": {
+    "method": "Connected Components on SimHash-64 Graph (Atomic Component Assignment)",
+    "cluster_key": "NFC + lowercase + strip placeholders + remove punctuation + collapse spaces",
+    "selection_order": "SHA-256(comp_id) ascending, no RNG (strictly deterministic)",
+    "holdout_share_target": 0.2,
+    "near_dup_metric": "SimHash64 char-4gram, violation if hamming <= 3"
+  },
+  "counts": {
+    "total": 2664,
+    "train": 2147,
+    "holdout": 517,
+    "components_total": 2424,
+    "conflict_components": 17,
+    "conflict_rows": 76,
+    "mojibake_rows": 0,
+    "not_nfc_rows": 0,
+    "empty_rows": 0,
+    "very_short_rows": 5,
+    "exact_duplicate_values": 0
+  },
+  "labels": {
+    "train": {
+      "0": 1546,
+      "1": 601
+    },
+    "holdout": {
+      "0": 372,
+      "1": 145
+    }
+  },
+  "verification": {
+    "exact_key_overlap": 0,
+    "near_dup_violations": 0,
+    "min_hamming_holdout_vs_train": 4,
+    "passed": true
+  },
+  "sample_violations": []
+}
