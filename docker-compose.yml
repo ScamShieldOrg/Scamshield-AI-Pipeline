@@ -47,7 +47,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       QWEN_API_KEY: ${QWEN_API_KEY:-}
-      VIBI_BASE_URL: ${VIBI_BASE_URL:-https://vibi.top/v1}
+      VIBI_BASE_URL: ${VIBI_BASE_URL:-https://api.shopaikey.com/v1}
       SAFE_BROWSING_API_KEY: ${SAFE_BROWSING_API_KEY:-}
       PHISHTANK_FEED_PATH: /app/data/phishtank_online_valid.csv.gz
     depends_on:

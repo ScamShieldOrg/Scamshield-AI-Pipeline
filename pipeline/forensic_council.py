@@ -123,7 +123,7 @@ class ForensicCouncil:
         self.groq_api_key = os.getenv("GROQ_API_KEY") or ""
         self.openai_api_key = os.getenv("OPENAI_API_KEY") or ""
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY") or ""
-        self.vibi_base_url = os.getenv("VIBI_BASE_URL", "https://api.vnaipro.app/v1")
+        self.vibi_base_url = os.getenv("VIBI_BASE_URL", "https://api.shopaikey.com/v1")
 
         logger.info(
             f"ForensicCouncil initialized with {len(self.specialists)} specialists. "
@@ -186,7 +186,7 @@ class ForensicCouncil:
         return json.loads(raw_text)
 
     async def _call_vibi_api(self, model: str, prompt: str, system_prompt: str) -> Dict[str, Any]:
-        """Calls vibi.top OpenAI-compatible proxy for GPT and Claude models."""
+        """Calls OpenAI-compatible proxy (api.shopaikey.com) for GPT and Claude models."""
         key = self.openai_api_key if ("gpt" in model or "sol" in model) else (self.anthropic_api_key or self.openai_api_key)
         if not key:
             raise ValueError("VIBI / OPENAI API KEY missing")
