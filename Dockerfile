@@ -17,7 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
+# Install CPU-only PyTorch first to avoid pulling multi-GB CUDA wheels on Railway
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch>=2.5,<3"
+
+# Install remaining python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -37,9 +40,9 @@ COPY demo_scamshield_mvp.py /app/
 # Expose microservice port
 EXPOSE 8000
 
-# Healthcheck probe
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Healthcheck probe (respects Railway dynamic PORT)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD sh -c 'curl -f http://localhost:${PORT:-8000}/health || exit 1'
 
-# Run Uvicorn server
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run Uvicorn server (binds to Railway $PORT or defaults to 8000)
+CMD ["sh", "-c", "uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]

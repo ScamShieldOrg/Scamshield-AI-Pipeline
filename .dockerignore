@@ -24,8 +24,13 @@ tests/
 htmlcov/
 *.log
 
-# Training and benchmark data
+# Training, benchmark data, and unused FP32 checkpoints
 data/
+results/
+tools/
+experiments/
+models/visobert_finetuned/*.onnx
+models/visobert_finetuned/*.safetensors
 *.csv
 *.parquet
 *.jsonl

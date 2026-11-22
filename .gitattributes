@@ -1,3 +1,5 @@
 *.onnx filter=lfs diff=lfs merge=lfs -text
+# Keep INT8 release model (93.86 MB < 100 MB GitHub limit) directly in Git so Railway Docker builds do not receive a 133-byte LFS pointer
+visobert_5runs_release/visobert_tier1_int8.onnx -filter -diff -merge binary
 *.safetensors filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
