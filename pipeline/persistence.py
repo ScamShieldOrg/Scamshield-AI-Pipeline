@@ -243,8 +243,10 @@ def save_scan(
                 job_values,
             )
             job_id = cursor.fetchone()[0]
-            cursor.execute("""DELETE FROM inference_retrieved_chunks
-                              WHERE inference_id IN (SELECT id FROM ai_inferences WHERE ai_job_id = %s)""", (job_id,))
+            cursor.execute("SELECT to_regclass('public.inference_retrieved_chunks')")
+            if cursor.fetchone()[0] is not None:
+                cursor.execute("""DELETE FROM inference_retrieved_chunks
+                                  WHERE inference_id IN (SELECT id FROM ai_inferences WHERE ai_job_id = %s)""", (job_id,))
             cursor.execute("DELETE FROM ai_inferences WHERE ai_job_id = %s", (job_id,))
 
             if url_only:
