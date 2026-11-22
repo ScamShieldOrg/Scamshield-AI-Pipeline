@@ -38,7 +38,7 @@ from pipeline.deterministic_features import extract_deterministic_features
 from pipeline.verdict_contract import normalize_verdict
 from pipeline.tier2_cache import Tier2CacheManager
 from api.visobert_app import router as visobert_router
-from pipeline.persistence import check_database, save_scan
+from pipeline.persistence import check_database, ensure_core_schema, save_scan
 from pipeline.rag import BgeM3Embedder, RagRetriever, apply_rag_migration
 from pipeline.rag_ingestion import RagIngestor
 from scripts.update_phishtank import feed_path, main as download_phishtank_feed
@@ -144,6 +144,11 @@ def startup_event():
         return
     logger.info("Initializing ScamShield TwoTierRouter...")
     try:
+        try:
+            ensure_core_schema()
+            logger.info("Core PostgreSQL schema verified/initialized.")
+        except Exception as db_init_error:
+            logger.warning("Core PostgreSQL schema init skipped: %s", type(db_init_error).__name__)
         rag_retriever = None
         if not hasattr(app.state, "rag_embedder"):
             app.state.rag_embedder = None
