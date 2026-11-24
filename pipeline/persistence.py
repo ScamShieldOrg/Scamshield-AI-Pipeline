@@ -9,7 +9,10 @@ from typing import Any, Dict, Optional
 
 import psycopg
 from psycopg.types.json import Json
+from .pii_sanitizer import MessagePIISanitizer
 from .url_signals import council_evidence
+
+_SANITIZER = MessagePIISanitizer()
 
 
 def _now() -> datetime:
@@ -17,10 +20,9 @@ def _now() -> datetime:
 
 
 def _masked(text: str) -> str:
-    """Mask common contact and account identifiers before storing message text."""
-    text = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[EMAIL]", text)
-    text = re.sub(r"(?<!\w)(?:\+?\d[\d ().-]{7,}\d)(?!\w)", "[PHONE_OR_ACCOUNT]", text)
-    return text
+    """Mask PII using the unified MessagePIISanitizer plus email redaction before storing."""
+    sanitized, _ = _SANITIZER.sanitize(text)
+    return re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[EMAIL]", sanitized)
 
 
 def _result(label: Optional[str]) -> str:

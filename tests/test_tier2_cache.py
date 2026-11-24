@@ -100,3 +100,27 @@ def test_tier2_cache_rejects_degradation_failure():
 
     stored = cache.store("MESSAGE", content, failure_result)
     assert stored is False, "Degradation failures must NOT be cached!"
+
+
+def test_url_cache_normalizes_scheme_port_and_trailing_slash():
+    cache = Tier2CacheManager()
+    council_result = {
+        "routing_path": "TIER_2_FORENSIC_COUNCIL",
+        "is_scam": True,
+        "final_confidence": 0.94,
+        "risk_level": "HIGH",
+        "scam_type": "Phishing URL",
+        "explanation": "Domain giả mạo ngân hàng.",
+        "scan_id": "SC-URL-001",
+    }
+
+    assert cache.store("URL", "https://CPS.ONL:443/ymajtwftyg/", council_result) is True
+
+    hit_no_scheme = cache.lookup("URL", "cps.onl/ymajtwftyg")
+    assert hit_no_scheme is not None
+    assert hit_no_scheme["decided_by"] == "CACHE"
+    assert hit_no_scheme["is_scam"] is True
+
+    hit_http = cache.lookup("URL", "http://cps.onl:80/ymajtwftyg#frag")
+    assert hit_http is not None
+    assert hit_http["hit_count"] == 2

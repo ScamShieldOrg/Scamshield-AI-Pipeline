@@ -25,6 +25,7 @@ import threading
 import unicodedata
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlsplit
 
 logger = logging.getLogger("ScamShield.Tier2Cache")
 
@@ -37,14 +38,45 @@ def nfc_normalize(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
-def normalize_cache_text(text: str) -> str:
+def normalize_cache_url(text: str) -> str:
+    """Canonicalize standalone URLs for deterministic cache matching (scheme/port/trailing-slash agnostic)."""
+    raw = nfc_normalize(text).strip()
+    if not raw:
+        return ""
+    candidate = raw if "://" in raw else f"https://{raw}"
+    try:
+        parsed = urlsplit(candidate)
+        host = (parsed.hostname or "").lower().rstrip(".")
+        if not host:
+            return raw.lower()
+        scheme = (parsed.scheme or "https").lower()
+        port = parsed.port
+        default_port = port is None or (port == 80 and scheme == "http") or (port == 443 and scheme == "https")
+        netloc = host if default_port else f"{host}:{port}"
+        path = parsed.path or ""
+        if path == "/" and not parsed.query:
+            path = ""
+        elif path.endswith("/") and len(path) > 1 and not parsed.query:
+            path = path.rstrip("/")
+        query = f"?{parsed.query}" if parsed.query else ""
+        return f"{netloc}{path}{query}"
+    except ValueError:
+        return raw.lower()
+
+
+def normalize_cache_text(text: str, input_type: str = "MESSAGE") -> str:
     """Standardize text for deterministic cache hashing."""
+    if input_type == "URL":
+        return normalize_cache_url(text)
     s = nfc_normalize(text).lower()
     return re.sub(r"\s+", " ", s).strip()
 
 
-def extract_indicators(text: str) -> List[str]:
+def extract_indicators(text: str, input_type: str = "MESSAGE") -> List[str]:
     """Extract structural indicators (URLs, phone numbers, account numbers)."""
+    if input_type == "URL":
+        canonical = normalize_cache_url(text)
+        return [canonical] if canonical else []
     urls = [u.lower() for u in URL_RE.findall(text)]
     phones = PHONE_RE.findall(text)
     accounts = ACCOUNT_RE.findall(text)
@@ -52,18 +84,22 @@ def extract_indicators(text: str) -> List[str]:
     return combined
 
 
-def compute_indicator_hash(text: str) -> str:
+def compute_indicator_hash(text: str, input_type: str = "MESSAGE") -> str:
     """Compute SHA-256 over sorted indicator set to prevent indicator spoofing."""
-    indicators = extract_indicators(text)
+    indicators = extract_indicators(text, input_type=input_type)
     if not indicators:
         return ""
     joined = "|".join(indicators)
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 
-def compute_exact_hash(text: str, secret_key: str = "scamshield-cache-salt-v1") -> str:
+def compute_exact_hash(
+    text: str,
+    secret_key: str = "scamshield-cache-salt-v1",
+    input_type: str = "MESSAGE",
+) -> str:
     """HMAC-SHA256 of normalized text to protect against dictionary rainbow tables."""
-    norm = normalize_cache_text(text)
+    norm = normalize_cache_text(text, input_type=input_type)
     return hmac.new(secret_key.encode("utf-8"), norm.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
@@ -105,8 +141,8 @@ class Tier2CacheManager:
         Check if an authentic Tier-2 analysis exists in cache.
         Returns cached result dictionary if valid and unexpired; None otherwise.
         """
-        exact_h = compute_exact_hash(content)
-        indicator_h = compute_indicator_hash(content)
+        exact_h = compute_exact_hash(content, input_type=input_type)
+        indicator_h = compute_indicator_hash(content, input_type=input_type)
         key = self._cache_key(input_type, exact_h, model_version, prompt_version, policy_version)
         now = self._now()
 
@@ -186,8 +222,8 @@ class Tier2CacheManager:
             logger.debug(f"Skipping cache store for non-tier2 routing path: {routing_path}")
             return False
 
-        exact_h = compute_exact_hash(content)
-        indicator_h = compute_indicator_hash(content)
+        exact_h = compute_exact_hash(content, input_type=input_type)
+        indicator_h = compute_indicator_hash(content, input_type=input_type)
         key = self._cache_key(input_type, exact_h, model_version, prompt_version, policy_version)
         now = self._now()
         ttl_days = self.default_sms_ttl_days if input_type != "URL" else self.default_url_ttl_days
