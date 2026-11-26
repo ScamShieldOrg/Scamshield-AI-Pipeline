@@ -124,3 +124,94 @@ def test_url_cache_normalizes_scheme_port_and_trailing_slash():
     hit_http = cache.lookup("URL", "http://cps.onl:80/ymajtwftyg#frag")
     assert hit_http is not None
     assert hit_http["hit_count"] == 2
+
+
+def test_tier2_cache_preserves_unknown_verdict_with_24h_ttl():
+    """Successful Tier-2 Council UNKNOWN verdict must be cached as UNKNOWN (not LOW_RISK) with 24h TTL."""
+    cache = Tier2CacheManager(default_unknown_ttl_hours=24)
+    content = 'Chao Nam Moi 2026 ! Tang Lop Hoc 2 Ngay, Hoc Qua Zoom "DONG TIEN HANH PHUC" Vao nhom Zalo https://zalo.me/g/wsqcpu908'
+    council_unknown = {
+        "routing_path": "TIER_2_FORENSIC_COUNCIL",
+        "final_label": "UNKNOWN",
+        "is_scam": False,
+        "is_unknown": True,
+        "final_confidence": 0.55,
+        "risk_level": "UNKNOWN",
+        "scam_type": "Chưa đủ cơ sở kết luận",
+        "explanation": "Hội đồng chuyên gia nhận thấy chưa đủ bằng chứng kết luận lừa đảo.",
+        "model_name": "ForensicCouncil-v1.1 (FullPanel)",
+        "scan_id": "SC-UNK-001",
+        "council_deliberation": {"summary": "Mixed signals"},
+        "tier1_telemetry": {"label": "HAM", "confidence": 0.62},
+        "tier2_telemetry": {
+            "status": "EXECUTED",
+            "consensus_score": 0.55,
+            "specialist_votes": {
+                "linguistic": {"display_name": "Linguistic", "vote": "UNKNOWN", "scam_prob": 0.55, "analysis": "Ambiguous"}
+            },
+        },
+    }
+
+    assert cache.store("MESSAGE", content, council_unknown) is True
+    hit = cache.lookup("MESSAGE", content)
+    assert hit is not None
+    assert hit["final_label"] == "UNKNOWN"
+    assert hit["is_scam"] is False
+    assert hit["is_unknown"] is True
+    assert hit["escalated"] is True
+    assert hit["decided_by"] == "CACHE"
+    assert hit["routing_path"] == "CACHE_HIT_TIER_2"
+    assert hit["total_cost_usd"] == 0.0
+    assert hit["model_name"] == "ForensicCouncil-v1.1 (FullPanel)"
+    assert hit["council_deliberation"] == {"summary": "Mixed signals"}
+
+    # Verify 24h TTL on memory entry
+    key = cache.build_key("MESSAGE", content)
+    entry = cache._memory_cache[key]
+    ttl_hours = (entry["expires_at"] - entry["created_at"]).total_seconds() / 3600.0
+    assert 23.9 <= ttl_hours <= 24.1
+
+
+def test_single_flight_deduplicates_concurrent_identical_requests():
+    import threading
+    import time
+
+    cache = Tier2CacheManager()
+    content = "Tang khoa hoc Zoom mien phi https://zalo.me/g/test123"
+    key1, is_leader1, ev1 = cache.acquire_inflight("MESSAGE", content)
+    key2, is_leader2, ev2 = cache.acquire_inflight("MESSAGE", content)
+
+    assert key1 == key2
+    assert is_leader1 is True
+    assert is_leader2 is False
+    assert ev1 is ev2
+
+    released = []
+
+    def follower():
+        ev2.wait(timeout=2.0)
+        released.append(cache.lookup("MESSAGE", content))
+
+    t = threading.Thread(target=follower)
+    t.start()
+    time.sleep(0.05)
+    cache.store(
+        "MESSAGE",
+        content,
+        {
+            "routing_path": "TIER_2_FORENSIC_COUNCIL",
+            "final_label": "UNKNOWN",
+            "is_scam": False,
+            "is_unknown": True,
+            "final_confidence": 0.5,
+            "risk_level": "UNKNOWN",
+            "explanation": "Cached after leader finished.",
+        },
+    )
+    cache.release_inflight(key1)
+    t.join(timeout=2.0)
+
+    assert len(released) == 1
+    assert released[0] is not None
+    assert released[0]["final_label"] == "UNKNOWN"
+    assert released[0]["routing_path"] == "CACHE_HIT_TIER_2"

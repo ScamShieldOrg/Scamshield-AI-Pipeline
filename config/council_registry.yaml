@@ -46,11 +46,13 @@ specialists:
     display_name: "Cyber-Financial & Banking Security Analyst"
     description: "Consolidated role merging Technical URL/Domain infrastructure inspection with Banking/Financial protocol verification (Decision 2345/QĐ-NHNN)."
     primary_maker_model: "gpt-6.1-sol"
-    secondary_checker_model: "gemini-3.5-flash-lite"
+    secondary_checker_model: "gemini-3.5-flash"
     standby_priority_chain:
-      - "gemini-3.8-flash"
-      - "gpt-6-sol"
-      - "gemini-3.5-flash"
+      - "gpt-5.6-sol-low"
+      - "gpt-5.4-mini"
+      - "deepseek-v4.1-flash"
+      - "gemini-3.5-flash-lite"
+      - "gpt-6.2-sol"
     weight: 0.35
     prompt_template: |
       Bạn là Chuyên gia Cao cấp về An ninh Mạng và Quy trình Pháp lý Ngân hàng thuộc Hội đồng Pháp y ScamShield-VN.
@@ -67,11 +69,13 @@ specialists:
     display_name: "Psycholinguistic & Vietnamese Slang Profiler"
     description: "Consolidated role merging Psychological manipulation analysis with Vietnamese teencode and lexical evasion decoding."
     primary_maker_model: "gpt-6.1-sol"
-    secondary_checker_model: "gemini-3.5-flash-lite"
+    secondary_checker_model: "gemini-3.5-flash"
     standby_priority_chain:
-      - "gemini-3.8-flash"
-      - "gpt-6-sol"
-      - "gemini-3.5-flash"
+      - "gpt-5.6-sol-low"
+      - "gpt-5.4-mini"
+      - "deepseek-v4.1-flash"
+      - "gemini-3.5-flash-lite"
+      - "gpt-6.2-sol"
     weight: 0.35
     prompt_template: |
       Bạn là Chuyên gia Tâm lý Tội phạm và Ngôn ngữ học Tiếng Việt thuộc Hội đồng Pháp y ScamShield-VN.
@@ -88,11 +92,13 @@ specialists:
     display_name: "Public Defender & Anti-False-Positive Advocate"
     description: "Devil's advocate persona focused strictly on protecting legitimate communication, identifying authentic e-commerce, legitimate OTPs, and preventing Alarm Fatigue."
     primary_maker_model: "gpt-6.1-sol"             # 0.00% FPR record, 100% protection for authentic HAM
-    secondary_checker_model: "gemini-3.8-flash"    # High precision reasoning, zero false alarms
+    secondary_checker_model: "gemini-3.5-flash"    # Fast cross-provider checker (1.15s)
     standby_priority_chain:
+      - "gpt-5.6-sol-low"
+      - "gpt-5.4-mini"
+      - "deepseek-v4.1-flash"
       - "gemini-3.5-flash-lite"
-      - "gpt-6-sol"
-      - "gemini-3.5-flash"
+      - "gpt-6.2-sol"
     weight: 0.30  # Strong weight to defend legitimate non-scam messages
     prompt_template: |
       Bạn là Luật sư Bào chữa Công cộng (Public Defender) thuộc Hội đồng Pháp y ScamShield-VN.

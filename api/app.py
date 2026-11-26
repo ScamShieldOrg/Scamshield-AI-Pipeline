@@ -324,13 +324,15 @@ def scan_message(req: ScanRequest):
         )
 
     content_to_scan = req.content
+    cache_input_type = "URL" if req.check_type == "URL" else "MESSAGE"
+    scan_id = f"SC-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
-    # GĐ5: Kiểm tra Cache Tier-2 trước khi gọi Cloud tốn kém
+    # GĐ5: Kiểm tra Cache Tier-2 + Single-flight lock trước khi gọi Cloud tốn kém
     cached_hit = None
     if not req.force_tier2:
         try:
             cached_hit = cache_manager.lookup(
-                input_type="URL" if req.check_type == "URL" else "MESSAGE",
+                input_type=cache_input_type,
                 content=content_to_scan,
             )
         except Exception as e:
@@ -339,25 +341,66 @@ def scan_message(req: ScanRequest):
     if cached_hit:
         raw_res = cached_hit
     else:
-        try:
-            raw_res = router_instance.classify(content_to_scan, force_tier2=req.force_tier2, check_type=req.check_type)
-        except Exception as e:
-            logger.error(f"Inference error during scan: {e}", exc_info=True)
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"status": "error", "data": None, "error": f"Model inference failed: {str(e)}"},
+        inflight_key = None
+        is_leader = False
+        if not req.force_tier2:
+            inflight_key, is_leader, inflight_event = cache_manager.acquire_inflight(
+                input_type=cache_input_type,
+                content=content_to_scan,
             )
-        
-        # GĐ5: Lưu kết quả Tier 2 thành công vào Cache
-        if raw_res.get("routing_path") in ("TIER_2_FORENSIC_COUNCIL", "TIER_2_CLOUD_FALLBACK"):
+            if not is_leader:
+                logger.info("Tier-2 Single-Flight: waiting for in-flight analysis to finish...")
+                inflight_event.wait(timeout=45.0)
+                try:
+                    cached_hit = cache_manager.lookup(
+                        input_type=cache_input_type,
+                        content=content_to_scan,
+                    )
+                except Exception as e:
+                    logger.warning(f"Cache lookup after single-flight wait failed: {e}")
+
+        if cached_hit:
+            raw_res = cached_hit
+        else:
             try:
-                cache_manager.store(
-                    input_type="URL" if req.check_type == "URL" else "MESSAGE",
-                    content=content_to_scan,
-                    raw_result=raw_res,
-                )
-            except Exception as e:
-                logger.warning(f"Failed to store Tier-2 analysis in cache: {e}")
+                if is_leader:
+                    try:
+                        cached_hit = cache_manager.lookup(
+                            input_type=cache_input_type,
+                            content=content_to_scan,
+                        )
+                    except Exception as e:
+                        logger.warning(f"Cache re-check failed: {e}")
+
+                if cached_hit:
+                    raw_res = cached_hit
+                else:
+                    try:
+                        raw_res = router_instance.classify(
+                            content_to_scan,
+                            force_tier2=req.force_tier2,
+                            check_type=req.check_type,
+                        )
+                    except Exception as e:
+                        logger.error(f"Inference error during scan: {e}", exc_info=True)
+                        return JSONResponse(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            content={"status": "error", "data": None, "error": f"Model inference failed: {str(e)}"},
+                        )
+
+                    # GĐ5: Lưu kết quả Tier 2 thành công vào Cache (giữ đúng tri-state verdict)
+                    if raw_res.get("routing_path") in ("TIER_2_FORENSIC_COUNCIL", "TIER_2_CLOUD_FALLBACK"):
+                        try:
+                            cache_manager.store(
+                                input_type=cache_input_type,
+                                content=content_to_scan,
+                                raw_result={**raw_res, "scan_id": scan_id},
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to store Tier-2 analysis in cache: {e}")
+            finally:
+                if is_leader and inflight_key is not None:
+                    cache_manager.release_inflight(inflight_key)
 
     is_scam = raw_res.get("is_scam", False)
     confidence = float(raw_res.get("final_confidence", 0.0))
@@ -394,8 +437,10 @@ def scan_message(req: ScanRequest):
     else:
         warning_level = "NONE"
 
-    # GĐ1: Xác định decided_by engine
-    if routing_path == "TIER_1_DIRECT_FASTPATH":
+    # GĐ1/GĐ5: Xác định decided_by engine
+    if routing_path == "CACHE_HIT_TIER_2" or raw_res.get("decided_by") == "CACHE":
+        decided_by = "CACHE"
+    elif routing_path == "TIER_1_DIRECT_FASTPATH":
         decided_by = "TIER1"
     elif routing_path == "TIER_2_FORENSIC_COUNCIL":
         decided_by = "COUNCIL"
@@ -406,7 +451,7 @@ def scan_message(req: ScanRequest):
 
     # GĐ1: Trích xuất bằng chứng văn bản (evidence) có thật trong input
     evidence = []
-    matched_cues = raw_res.get("tier1_telemetry", {}).get("matched_cues", [])
+    matched_cues = (raw_res.get("tier1_telemetry") or {}).get("matched_cues", [])
     if isinstance(matched_cues, list):
         for cue in matched_cues:
             if isinstance(cue, str) and cue.lower() in content_to_scan.lower() and cue not in evidence:
@@ -422,10 +467,10 @@ def scan_message(req: ScanRequest):
     elif any(kw in lower_content for kw in ["ma xac minh", "otp", "mat khau"]):
         content_class = "AUTH_CREDENTIAL" 
 
-    # Format Council Breakdown if Tier 2 executed
+    # Format Council Breakdown if Tier 2 executed (including Tier-2 cache hits)
     council_breakdown = None
-    if tier_executed == 2 and "tier2_telemetry" in raw_res:
-        t2_telemetry = raw_res["tier2_telemetry"]
+    t2_telemetry = raw_res.get("tier2_telemetry") or {}
+    if tier_executed == 2 and t2_telemetry:
         specialist_votes = t2_telemetry.get("specialist_votes", {})
         votes_list = list(specialist_votes.values()) if isinstance(specialist_votes, dict) else specialist_votes
         agents_list = []
@@ -452,7 +497,6 @@ def scan_message(req: ScanRequest):
             agents=agents_list,
         )
 
-    scan_id = f"SC-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
     timestamp = datetime.now(timezone.utc).isoformat()
 
     verdict = Verdict(
@@ -473,6 +517,21 @@ def scan_message(req: ScanRequest):
     radar = _compute_radar_metrics(content_to_scan, is_scam, raw_res, deterministic=deterministic_features)
     recommendations = _build_recommendations(content_to_scan, is_scam, risk_level)
 
+    telemetry_payload = {
+        "routing_path": raw_res.get("routing_path"),
+        "routing_reason": raw_res.get("routing_reason"),
+        "total_latency_ms": raw_res.get("total_latency_ms"),
+        "total_cost_usd": raw_res.get("total_cost_usd"),
+        "tier1": raw_res.get("tier1_telemetry"),
+        "tier2": raw_res.get("tier2_telemetry"),
+        "final_label": raw_res.get("final_label"),
+    }
+    if raw_res.get("routing_path") == "CACHE_HIT_TIER_2":
+        telemetry_payload["cache_hit"] = True
+        telemetry_payload["cached_at"] = raw_res.get("cached_at")
+        telemetry_payload["source_scan_id"] = raw_res.get("source_scan_id")
+        telemetry_payload["hit_count"] = raw_res.get("hit_count")
+
     result_data = ScanResultData(
         scan_id=scan_id,
         timestamp=timestamp,
@@ -483,15 +542,7 @@ def scan_message(req: ScanRequest):
         actionable_recommendations=recommendations,
         council_deliberation=raw_res.get("council_deliberation"),
         deterministic_features=deterministic_features,
-        telemetry={
-            "routing_path": raw_res.get("routing_path"),
-            "routing_reason": raw_res.get("routing_reason"),
-            "total_latency_ms": raw_res.get("total_latency_ms"),
-            "total_cost_usd": raw_res.get("total_cost_usd"),
-            "tier1": raw_res.get("tier1_telemetry"),
-            "tier2": raw_res.get("tier2_telemetry"),
-            "final_label": raw_res.get("final_label"),
-        },
+        telemetry=telemetry_payload,
     )
 
     try:

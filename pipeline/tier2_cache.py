@@ -103,9 +103,25 @@ def compute_exact_hash(
     return hmac.new(secret_key.encode("utf-8"), norm.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
+DEFAULT_MODEL_VERSION = "ForensicCouncil-v2.0"
+DEFAULT_PROMPT_VERSION = "v1"
+DEFAULT_POLICY_VERSION = "v2"
+
+
+def _resolve_verdict_and_label(raw_result: Dict[str, Any]) -> tuple[str, str]:
+    """Preserve exact tri-state verdicts (SCAM_RISK / LOW_RISK / UNKNOWN)."""
+    raw_label = str(raw_result.get("final_label") or "").strip().upper()
+    if raw_label in {"SCAM-RISK", "SCAM_RISK", "DANGEROUS", "SCAM"} or raw_result.get("is_scam") is True:
+        return "SCAM_RISK", "SCAM-RISK"
+    if raw_label in {"UNKNOWN", "REVIEW", "SUSPICIOUS_REVIEW"} or raw_result.get("is_unknown") is True:
+        return "UNKNOWN", "UNKNOWN"
+    return "LOW_RISK", "LOW-RISK"
+
+
 class Tier2CacheManager:
     """
-    Tier-2 Analysis Cache with dual-mode storage (PostgreSQL when live, Memory fallback for dev/offline).
+    Tier-2 Analysis Cache with dual-mode storage (PostgreSQL when live, Memory fallback for dev/offline)
+    and in-process single-flight deduplication for concurrent identical requests.
     """
 
     def __init__(
@@ -113,6 +129,7 @@ class Tier2CacheManager:
         database_url: Optional[str] = None,
         default_sms_ttl_days: int = 30,
         default_url_ttl_days: int = 3,
+        default_unknown_ttl_hours: int = 24,
     ):
         self.database_url = database_url or os.getenv(
             "DATABASE_URL",
@@ -120,7 +137,9 @@ class Tier2CacheManager:
         )
         self.default_sms_ttl_days = default_sms_ttl_days
         self.default_url_ttl_days = default_url_ttl_days
+        self.default_unknown_ttl_hours = default_unknown_ttl_hours
         self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        self._inflight: Dict[str, threading.Event] = {}
         self._lock = threading.Lock()
 
     def _now(self) -> datetime:
@@ -129,18 +148,56 @@ class Tier2CacheManager:
     def _cache_key(self, input_type: str, exact_hash: str, model_version: str, prompt_version: str, policy_version: str) -> str:
         return f"{input_type}:{exact_hash}:{model_version}:{prompt_version}:{policy_version}"
 
+    def build_key(
+        self,
+        input_type: str,
+        content: str,
+        model_version: str = DEFAULT_MODEL_VERSION,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+        policy_version: str = DEFAULT_POLICY_VERSION,
+    ) -> str:
+        exact_h = compute_exact_hash(content, input_type=input_type)
+        return self._cache_key(input_type, exact_h, model_version, prompt_version, policy_version)
+
+    def acquire_inflight(
+        self,
+        input_type: str,
+        content: str,
+        model_version: str = DEFAULT_MODEL_VERSION,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+        policy_version: str = DEFAULT_POLICY_VERSION,
+    ) -> tuple[str, bool, threading.Event]:
+        """Single-flight coordinator: returns (key, is_leader, event)."""
+        key = self.build_key(input_type, content, model_version, prompt_version, policy_version)
+        with self._lock:
+            existing = self._inflight.get(key)
+            if existing is not None:
+                return key, False, existing
+            event = threading.Event()
+            self._inflight[key] = event
+            return key, True, event
+
+    def release_inflight(self, key: str) -> None:
+        """Signal all waiting followers and clear the in-flight entry."""
+        with self._lock:
+            event = self._inflight.pop(key, None)
+        if event is not None:
+            event.set()
+
     def lookup(
         self,
         input_type: str,
         content: str,
-        model_version: str = "ForensicCouncil-v2.0",
-        prompt_version: str = "v1",
-        policy_version: str = "v1",
+        model_version: str = DEFAULT_MODEL_VERSION,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+        policy_version: str = DEFAULT_POLICY_VERSION,
     ) -> Optional[Dict[str, Any]]:
         """
         Check if an authentic Tier-2 analysis exists in cache.
         Returns cached result dictionary if valid and unexpired; None otherwise.
         """
+        import time
+        started = time.perf_counter()
         exact_h = compute_exact_hash(content, input_type=input_type)
         indicator_h = compute_indicator_hash(content, input_type=input_type)
         key = self._cache_key(input_type, exact_h, model_version, prompt_version, policy_version)
@@ -152,10 +209,11 @@ class Tier2CacheManager:
             if cached:
                 if cached["expires_at"] > now:
                     # Invariant: Indicator hash must match
-                    if cached.get("indicator_hash") == indicator_h:
+                    if (cached.get("indicator_hash") or "").strip() == indicator_h:
                         cached["hit_count"] += 1
+                        elapsed_ms = (time.perf_counter() - started) * 1000.0
                         logger.info(f"Tier-2 Cache Hit (Memory): exact_hash={exact_h[:12]}, hits={cached['hit_count']}")
-                        return self._format_cache_hit(cached)
+                        return self._format_cache_hit(cached, lookup_latency_ms=elapsed_ms)
                 else:
                     del self._memory_cache[key]
 
@@ -178,29 +236,24 @@ class Tier2CacheManager:
                     row = cur.fetchone()
                     if row:
                         cid, verdict, risk_level, confidence, routing_path, ai_snapshot, stored_ind_h, hit_count, created_at = row
-                        if stored_ind_h == indicator_h:
+                        if (stored_ind_h or "").strip() == indicator_h:
                             cur.execute("UPDATE ai_analysis_cache SET hit_count = hit_count + 1 WHERE id = %s", (cid,))
                             conn.commit()
+                            elapsed_ms = (time.perf_counter() - started) * 1000.0
                             logger.info(f"Tier-2 Cache Hit (Postgres): id={cid}, hits={hit_count + 1}")
-                            return {
-                                "is_scam": (verdict == "SCAM_RISK"),
-                                "final_label": "SCAM-RISK" if verdict == "SCAM_RISK" else "LOW-RISK",
-                                "final_confidence": float(confidence),
+                            item = {
+                                "verdict": verdict,
                                 "risk_level": risk_level,
-                                "scam_type": ai_snapshot.get("scam_type", "Tái sử dụng phân tích chuyên sâu"),
-                                "explanation": ai_snapshot.get("explanation", "Kết quả tái sử dụng từ lần phân tích Tier-2 trước."),
-                                "routing_path": "CACHE_HIT_TIER_2",
-                                "decided_by": "CACHE",
-                                "tier_used": "Tier 2 (Cached Forensic Analysis)",
-                                "cached_at": created_at.isoformat(),
-                                "source_scan_id": ai_snapshot.get("scan_id"),
-                                "tier1_telemetry": ai_snapshot.get("tier1_telemetry"),
-                                "tier2_telemetry": ai_snapshot.get("tier2_telemetry"),
+                                "confidence": float(confidence),
+                                "routing_path": routing_path,
+                                "snapshot": ai_snapshot or {},
+                                "model_version": model_version,
                                 "hit_count": hit_count + 1,
+                                "created_at": created_at,
                             }
-        except Exception:
-            # Fall back to memory cache seamlessly
-            pass
+                            return self._format_cache_hit(item, lookup_latency_ms=elapsed_ms)
+        except Exception as exc:
+            logger.warning("Tier-2 Cache Postgres lookup failed (falling back to memory): %s", exc)
 
         return None
 
@@ -209,13 +262,13 @@ class Tier2CacheManager:
         input_type: str,
         content: str,
         raw_result: Dict[str, Any],
-        model_version: str = "ForensicCouncil-v2.0",
-        prompt_version: str = "v1",
-        policy_version: str = "v1",
+        model_version: str = DEFAULT_MODEL_VERSION,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+        policy_version: str = DEFAULT_POLICY_VERSION,
     ) -> bool:
         """
-        Store a successful Tier-2 analysis.
-        Strict Invariant: NEVER store failures, unknown fallbacks, or Tier 1 direct exits.
+        Store a successful Tier-2 analysis (including tri-state SCAM_RISK, LOW_RISK, UNKNOWN).
+        Strict Invariant: NEVER store failures, degraded fallbacks, or Tier 1 direct exits.
         """
         routing_path = raw_result.get("routing_path", "")
         if routing_path not in ("TIER_2_FORENSIC_COUNCIL", "TIER_2_CLOUD_FALLBACK"):
@@ -226,18 +279,24 @@ class Tier2CacheManager:
         indicator_h = compute_indicator_hash(content, input_type=input_type)
         key = self._cache_key(input_type, exact_h, model_version, prompt_version, policy_version)
         now = self._now()
-        ttl_days = self.default_sms_ttl_days if input_type != "URL" else self.default_url_ttl_days
-        expires_at = now + timedelta(days=ttl_days)
 
-        is_scam = raw_result.get("is_scam", False)
-        verdict = "SCAM_RISK" if is_scam else "LOW_RISK"
-        risk_level = raw_result.get("risk_level", "HIGH" if is_scam else "LOW")
+        verdict, _ = _resolve_verdict_and_label(raw_result)
+        if verdict == "UNKNOWN":
+            expires_at = now + timedelta(hours=self.default_unknown_ttl_hours)
+        else:
+            ttl_days = self.default_sms_ttl_days if input_type != "URL" else self.default_url_ttl_days
+            expires_at = now + timedelta(days=ttl_days)
+
+        default_risk = "HIGH" if verdict == "SCAM_RISK" else ("UNKNOWN" if verdict == "UNKNOWN" else "LOW")
+        risk_level = raw_result.get("risk_level") or default_risk
         confidence = float(raw_result.get("final_confidence", 0.90))
 
         snapshot = {
             "scam_type": raw_result.get("scam_type"),
             "explanation": raw_result.get("explanation"),
             "scan_id": raw_result.get("scan_id"),
+            "model_name": raw_result.get("model_name"),
+            "council_deliberation": raw_result.get("council_deliberation"),
             "tier1_telemetry": raw_result.get("tier1_telemetry"),
             "tier2_telemetry": raw_result.get("tier2_telemetry"),
         }
@@ -276,6 +335,7 @@ class Tier2CacheManager:
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (input_type, exact_hash, model_version, prompt_version, policy_version)
                         DO UPDATE SET
+                            indicator_hash = EXCLUDED.indicator_hash,
                             verdict = EXCLUDED.verdict,
                             risk_level = EXCLUDED.risk_level,
                             confidence = EXCLUDED.confidence,
@@ -290,27 +350,39 @@ class Tier2CacheManager:
                         ),
                     )
                     conn.commit()
-                    logger.info(f"Tier-2 Cache stored in Postgres: exact_hash={exact_h[:12]}")
-        except Exception:
-            pass
+                    logger.info(f"Tier-2 Cache stored in Postgres: exact_hash={exact_h[:12]}, verdict={verdict}")
+        except Exception as exc:
+            logger.warning("Tier-2 Cache Postgres store failed (retained in memory): %s", exc)
 
         return True
 
-    def _format_cache_hit(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        snapshot = item["snapshot"]
+    def _format_cache_hit(self, item: Dict[str, Any], lookup_latency_ms: float = 0.0) -> Dict[str, Any]:
+        snapshot = item.get("snapshot") or {}
         verdict = item["verdict"]
+        final_label = (
+            "SCAM-RISK" if verdict == "SCAM_RISK"
+            else "UNKNOWN" if verdict == "UNKNOWN"
+            else "LOW-RISK"
+        )
         return {
             "is_scam": (verdict == "SCAM_RISK"),
-            "final_label": "SCAM-RISK" if verdict == "SCAM_RISK" else "LOW-RISK",
-            "final_confidence": item["confidence"],
+            "is_unknown": (verdict == "UNKNOWN"),
+            "final_label": final_label,
+            "final_confidence": float(item["confidence"]),
             "risk_level": item["risk_level"],
-            "scam_type": snapshot.get("scam_type", "Tái sử dụng phân tích chuyên sâu"),
-            "explanation": snapshot.get("explanation", "Kết quả tái sử dụng từ lần phân tích Tier-2 trước."),
+            "scam_type": snapshot.get("scam_type") or "Tái sử dụng phân tích chuyên sâu",
+            "explanation": snapshot.get("explanation") or "Kết quả tái sử dụng từ lần phân tích Tier-2 trước.",
+            "model_name": snapshot.get("model_name") or item.get("model_version") or DEFAULT_MODEL_VERSION,
             "routing_path": "CACHE_HIT_TIER_2",
+            "routing_reason": "Tái sử dụng kết quả phân tích chuyên sâu trước đó (không gọi lại Cloud LLM).",
             "decided_by": "CACHE",
             "tier_used": "Tier 2 (Cached Forensic Analysis)",
+            "escalated": True,
+            "total_cost_usd": 0.0,
+            "total_latency_ms": round(lookup_latency_ms, 2),
             "cached_at": item["created_at"].isoformat(),
             "source_scan_id": snapshot.get("scan_id"),
+            "council_deliberation": snapshot.get("council_deliberation"),
             "tier1_telemetry": snapshot.get("tier1_telemetry"),
             "tier2_telemetry": snapshot.get("tier2_telemetry"),
             "hit_count": item["hit_count"],

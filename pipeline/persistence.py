@@ -214,10 +214,30 @@ def save_scan(
     tier2 = raw_result.get("tier2_telemetry") or {}
     t1_label = tier1.get("label")
     final_label = raw_result.get("final_label")
-    llm_executed = tier2.get("status") == "EXECUTED"
+    is_cache_hit = (
+        raw_result.get("routing_path") == "CACHE_HIT_TIER_2"
+        or raw_result.get("decided_by") == "CACHE"
+    )
+    llm_executed = (not is_cache_hit) and tier2.get("status") == "EXECUTED"
     url_only = input_type == "URL"
-    stage = "LLM" if llm_executed else "URL_REPUTATION" if url_only else "VISOBERT"
-    stage_model_name = raw_result.get("model_name") if llm_executed else "ScamShield-URL-Reputation" if url_only else "ScamShield-ViSoBERT"
+    stage = (
+        "CACHE_TIER2"
+        if is_cache_hit
+        else "LLM"
+        if llm_executed
+        else "URL_REPUTATION"
+        if url_only
+        else "VISOBERT"
+    )
+    stage_model_name = (
+        raw_result.get("model_name") or "Tier2-Cache"
+        if is_cache_hit
+        else raw_result.get("model_name")
+        if llm_executed
+        else "ScamShield-URL-Reputation"
+        if url_only
+        else "ScamShield-ViSoBERT"
+    )
     stage_version = str(tier1.get("model_version", "1"))
 
     with psycopg.connect(database_url, connect_timeout=5) as connection:
@@ -251,7 +271,25 @@ def save_scan(
                                   WHERE inference_id IN (SELECT id FROM ai_inferences WHERE ai_job_id = %s)""", (job_id,))
             cursor.execute("DELETE FROM ai_inferences WHERE ai_job_id = %s", (job_id,))
 
-            if url_only:
+            if is_cache_hit:
+                cache_model_id = _model_id(cursor, str(stage_model_name or "Tier2-Cache"), "CACHE", "2.0", "cache")
+                cursor.execute(
+                    """INSERT INTO ai_inferences
+                       (ai_job_id, stage, model_id, result, confidence, explanation, raw_response,
+                        attempt_no, latency_ms, api_cost, fallback_used, created_at)
+                       VALUES (%s, 'CACHE_TIER2', %s, %s, %s, %s, %s, 1, %s, 0, false, %s)""",
+                    (
+                        job_id, cache_model_id, _result(final_label), confidence, explanation,
+                        Json({
+                            "routing_path": raw_result.get("routing_path"),
+                            "source_scan_id": raw_result.get("source_scan_id"),
+                            "cached_at": raw_result.get("cached_at"),
+                            "hit_count": raw_result.get("hit_count"),
+                        }),
+                        int(float(raw_result.get("total_latency_ms") or 0)), now,
+                    ),
+                )
+            elif url_only:
                 reputation_id = _model_id(cursor, "ScamShield-URL-Reputation", "URL_REPUTATION", "1", "PhishTank+SafeBrowsing")
                 cursor.execute(
                     """INSERT INTO ai_inferences

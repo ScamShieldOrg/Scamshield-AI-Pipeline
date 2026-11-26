@@ -173,9 +173,22 @@ class ForensicCouncil:
 
         loop = asyncio.get_event_loop()
         def _sync_post():
-            resp = requests.post(url, headers=headers, json=payload, timeout=15.0)
-            resp.raise_for_status()
-            return resp.json()
+            last_exc = None
+            for attempt in range(2):
+                try:
+                    resp = requests.post(url, headers=headers, json=payload, timeout=15.0)
+                    if resp.status_code == 503 and attempt == 0:
+                        time.sleep(1.2)
+                        continue
+                    resp.raise_for_status()
+                    return resp.json()
+                except requests.HTTPError as exc:
+                    last_exc = exc
+                    if exc.response is not None and exc.response.status_code == 503 and attempt == 0:
+                        time.sleep(1.2)
+                        continue
+                    raise
+            raise last_exc
 
         data = await loop.run_in_executor(None, _sync_post)
         raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -186,8 +199,8 @@ class ForensicCouncil:
         return json.loads(raw_text)
 
     async def _call_vibi_api(self, model: str, prompt: str, system_prompt: str) -> Dict[str, Any]:
-        """Calls OpenAI-compatible proxy (api.shopaikey.com) for GPT and Claude models."""
-        key = self.openai_api_key if ("gpt" in model or "sol" in model) else (self.anthropic_api_key or self.openai_api_key)
+        """Calls OpenAI-compatible proxy (api.shopaikey.com) for GPT, DeepSeek, and Claude models."""
+        key = self.openai_api_key if ("gpt" in model or "sol" in model or "deepseek" in model) else (self.anthropic_api_key or self.openai_api_key)
         if not key:
             raise ValueError("VIBI / OPENAI API KEY missing")
 
@@ -203,12 +216,13 @@ class ForensicCouncil:
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.1,
+            "max_tokens": 512,
             "stream": False
         }
 
         loop = asyncio.get_event_loop()
         def _sync_post():
-            resp = requests.post(url, headers=headers, json=payload, timeout=25.0)
+            resp = requests.post(url, headers=headers, json=payload, timeout=18.0)
             resp.raise_for_status()
             return resp.json()
 
@@ -329,7 +343,7 @@ Bắt buộc trả về định dạng JSON thuần túy theo schema sau:
                 # Try calling live API if keys available
                 parsed_result = None
                 api_calls_count += 1
-                if ("gpt" in model_candidate or "sol" in model_candidate or "claude" in model_candidate) and (self.openai_api_key or self.anthropic_api_key):
+                if ("gpt" in model_candidate or "sol" in model_candidate or "deepseek" in model_candidate or "claude" in model_candidate) and (self.openai_api_key or self.anthropic_api_key):
                     parsed_result = await self._call_vibi_api(model_candidate, user_prompt, system_prompt)
                 elif "gemini" in model_candidate and self.gemini_api_key:
                     parsed_result = await self._call_gemini_api(model_candidate, user_prompt, system_prompt)
